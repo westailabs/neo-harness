@@ -4,6 +4,8 @@ How the harness fits **GCP + Terraform** and **DBA** work: controlled phases, du
 audit memory, multi-day continuity — without turning the model into an unsupervised
 cloud admin.
 
+**Start here for a GCP-only overview:** [Using neo-harness in GCP](./gcp.md)
+
 **Related:** [Architecture](./architecture.md) · [Usage & demo](./usage-and-demo.md) ·
 [Security & publishing](./security-and-publishing.md) · [Providers](./providers.md)
 

@@ -208,8 +208,8 @@ uv run neo status --all
 
 ## Domain: GCP, Terraform, DBA
 
-For change management, drift, migrations, and cloud RCA patterns, see
-**[GCP / Terraform / DBA](./gcp-terraform-dba.md)**.
+- **[GCP overview](./gcp.md)** — high-value GCP uses, architecture sketch, safety rails  
+- **[GCP / Terraform / DBA](./gcp-terraform-dba.md)** — change management, drift, migrations, RCA detail
 
 ## FAQ
 

@@ -23,6 +23,7 @@ The model is a **replaceable reasoning engine**. The harness owns:
 | [Neo4j](./docs/neo4j.md) | Schema, Browser queries |
 | [Configuration](./docs/configuration.md) | Environment variables |
 | [Usage & demo](./docs/usage-and-demo.md) | How to use it · **demo script** |
+| [GCP overview](./docs/gcp.md) | How to use the harness on Google Cloud |
 | [GCP / Terraform / DBA](./docs/gcp-terraform-dba.md) | Ops patterns for cloud & database work |
 | [Development](./docs/development.md) | Layout, tests, extensions |
 | [Troubleshooting](./docs/troubleshooting.md) | Common failures |

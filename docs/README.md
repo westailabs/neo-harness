@@ -12,6 +12,7 @@ the harness owns control flow, typed memory (Neo4j), budgets, and reflection.
 | [Neo4j](./neo4j.md) | Graph schema, constraints, Browser queries |
 | [Configuration](./configuration.md) | Environment variables and defaults |
 | [Usage & demo](./usage-and-demo.md) | How to use it well; 8-minute demo script |
+| [GCP overview](./gcp.md) | How to use the harness on Google Cloud |
 | [GCP / Terraform / DBA](./gcp-terraform-dba.md) | Ops patterns: plan-only, drift, migrations, identity |
 | [Development](./development.md) | Layout, tests, extending the harness |
 | [Troubleshooting](./troubleshooting.md) | Venv warnings, auth failures, “frozen” UI |
