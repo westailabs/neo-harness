@@ -3,7 +3,8 @@
 Settings load from environment variables and optional project **`.env`**
 (`pydantic-settings`, see `config.py`). Copy from `.env.example`.
 
-`.env` is gitignored — never commit real passwords or API keys.
+`.env` is gitignored — **never commit real passwords or API keys.**  
+See [security-and-publishing.md](./security-and-publishing.md) for the full audit checklist.
 
 ## Core
 

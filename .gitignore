@@ -1,26 +1,80 @@
-# Python
+# --- Python / build ---
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+*.egg
 *.egg-info/
 .eggs/
 dist/
 build/
+pip-wheel-metadata/
+*.manifest
+*.spec
+
+# --- Test / type / lint caches ---
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.hypothesis/
+.tox/
+.nox/
 .coverage
+.coverage.*
 htmlcov/
+coverage.xml
+*.cover
+.cache/
+
+# --- Virtual envs (never publish) ---
 .venv/
 venv/
+ENV/
+env/
+.python-version
 
-# Env / local
+# --- Secrets & local config (never publish) ---
 .env
-.neo-harness/
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+*.credentials
+credentials.json
+secrets/
+.secrets/
 
-# Editors
+# --- neo-harness local state ---
+.neo-harness/
+**/active_session.json
+
+# --- Scratch / temp / logs ---
+scratch/
+tmp/
+temp/
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+*~
+
+# --- Editors / IDE ---
 .idea/
 .vscode/
 *.swp
+*.swo
+.project
+.settings/
 
-# uv — lockfile is committed for reproducible installs
+# --- Tooling local ---
+.direnv/
+.uv/
+# uv.lock IS tracked for reproducible installs
+
+# --- Optional local notes (keep out of public trees) ---
+notes.local.md
+TODO.local.md

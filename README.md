@@ -25,6 +25,7 @@ The model is a **replaceable reasoning engine**. The harness owns:
 | [Usage & demo](./docs/usage-and-demo.md) | How to use it · **demo script** |
 | [Development](./docs/development.md) | Layout, tests, extensions |
 | [Troubleshooting](./docs/troubleshooting.md) | Common failures |
+| [Security & publishing](./docs/security-and-publishing.md) | Secrets, bloat, pre-push audit |
 
 ## Architecture (snapshot)
 

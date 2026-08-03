@@ -14,9 +14,12 @@ the harness owns control flow, typed memory (Neo4j), budgets, and reflection.
 | [Usage & demo](./usage-and-demo.md) | How to use it well; 8-minute demo script |
 | [Development](./development.md) | Layout, tests, extending the harness |
 | [Troubleshooting](./troubleshooting.md) | Venv warnings, auth failures, “frozen” UI |
+| [Security & publishing](./security-and-publishing.md) | Secrets, bloat, pre-push audit |
 
 **Package version:** see `src/neo_harness/__init__.py` / `pyproject.toml`  
 **Root overview:** [../README.md](../README.md)
+
+**Do not commit** `.env`, `.venv`, or real passwords/API keys — see [Security & publishing](./security-and-publishing.md).
 
 ## Design principles (v0.1)
 
