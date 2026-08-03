@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# Env / local
+.env
+.neo-harness/
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# uv — lockfile is committed for reproducible installs
