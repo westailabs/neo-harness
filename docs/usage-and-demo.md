@@ -206,6 +206,11 @@ uv run neo status --all
 
 ---
 
+## Domain: GCP, Terraform, DBA
+
+For change management, drift, migrations, and cloud RCA patterns, see
+**[GCP / Terraform / DBA](./gcp-terraform-dba.md)**.
+
 ## FAQ
 
 **Why does `neo status` say no active session after a successful run?**  
