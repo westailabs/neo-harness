@@ -53,7 +53,14 @@ class CopilotProvider(ReasoningProvider):
         fallback: ReasoningProvider | None = None,
     ) -> None:
         self.command = command or os.environ.get("COPILOT_CMD") or "copilot"
-        self.model = model or os.environ.get("COPILOT_MODEL") or os.environ.get("NEO_COPILOT_MODEL")
+        # Prefer mini + low effort for lab thrift (override via env anytime).
+        # Note: some Copilot builds reject effort "none" for gpt-5-mini.
+        self.model = (
+            model
+            or os.environ.get("COPILOT_MODEL")
+            or os.environ.get("NEO_COPILOT_MODEL")
+            or "gpt-5-mini"
+        )
         self.effort = (
             effort
             or os.environ.get("COPILOT_EFFORT")

@@ -14,6 +14,7 @@ the harness owns control flow, typed memory (Neo4j), budgets, and reflection.
 | [Usage & demo](./usage-and-demo.md) | How to use it well; 8-minute demo script |
 | [SysAdmin workflow](./sysadmin-workflow.md) | Host IaC via `--agent sysadmin` (foobar alias walkthrough) |
 | [Plan: token diet + embed](./plans/token-diet-and-workspace-embed.md) | Agreed direction + next implementation fence |
+| [Workspace embed](./workspace-embed.md) | Bootstrap, pip pin, pack search order, thrift defaults |
 | [Development](./development.md) | Layout, tests, extending the harness |
 | [Troubleshooting](./troubleshooting.md) | Venv warnings, auth failures, “frozen” UI |
 | [Security & publishing](./security-and-publishing.md) | Secrets, bloat, pre-push audit |

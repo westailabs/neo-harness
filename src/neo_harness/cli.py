@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+import sys
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -13,12 +13,13 @@ from rich.panel import Panel
 from rich.table import Table
 
 from neo_harness import __version__
+from neo_harness.agents.loader import AgentProfile, list_agents, load_agent
 from neo_harness.config import get_settings
 from neo_harness.harness.budget import Budget
 from neo_harness.harness.loop import HarnessLoop
 from neo_harness.harness.memory import MemoryBundle
-from neo_harness.neo4j.client import Neo4jClient
 from neo_harness.neo4j import queries
+from neo_harness.neo4j.client import Neo4jClient
 from neo_harness.neo4j.schema import setup_schema
 from neo_harness.providers import get_provider
 from neo_harness.schemas.reflection import ReflectionTrigger
@@ -81,16 +82,67 @@ def _require_neo4j(client: Neo4jClient) -> None:
         raise typer.Exit(code=1)
 
 
+def _resolve_agent(agent_opt: str | None) -> AgentProfile | None:
+    """CLI flag wins over NEO_AGENT; missing pack is a hard error when set."""
+    settings = get_settings()
+    agent_id = agent_opt if agent_opt is not None else settings.agent
+    try:
+        return load_agent(agent_id)
+    except FileNotFoundError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+
+def task_summary(task: str, max_chars: int | None = None) -> str:
+    """One-line summary for status UI and metadata."""
+    if max_chars is None:
+        max_chars = get_settings().task_display_chars
+    text = task.strip()
+    if not text:
+        return ""
+    # Prefer first markdown H1 / non-empty line
+    for line in text.splitlines():
+        s = line.strip().lstrip("#").strip()
+        if s:
+            text = s
+            break
+    if len(text) <= max_chars:
+        return text
+    return text[: max_chars - 1] + "…"
+
+
+def _resolve_task_text(
+    task: str | None,
+    task_file: Path | None,
+) -> str:
+    """Resolve task from argument, --task-file, or stdin (`-`)."""
+    if task_file is not None:
+        path = task_file.expanduser()
+        if not path.is_file():
+            console.print(f"[red]Task file not found:[/red] {path}")
+            raise typer.Exit(code=1)
+        return path.read_text(encoding="utf-8")
+    if task is None or task == "":
+        console.print(
+            "[red]Task required.[/red] Pass a string, `--task-file PATH`, or `-` for stdin."
+        )
+        raise typer.Exit(code=1)
+    if task == "-":
+        return sys.stdin.read()
+    return task
+
+
 def _print_session(session: Session, *, title: str = "Session") -> None:
     table = Table(title=title, show_header=False, box=None, padding=(0, 2))
     table.add_column("key", style="cyan")
     table.add_column("value")
     table.add_row("id", session.id)
-    table.add_row("task", session.task)
+    table.add_row("task", task_summary(session.task))
     table.add_row("status", session.status.value)
     table.add_row("state", session.state.value)
     table.add_row("goal", session.goal or "—")
-    table.add_row("steps / actions / reflections", f"{session.step_count} / {session.action_count} / {session.reflection_count}")
+    steps = f"{session.step_count} / {session.action_count} / {session.reflection_count}"
+    table.add_row("steps / actions / reflections", steps)
     table.add_row("created", str(session.created_at))
     table.add_row("updated", str(session.updated_at))
     if session.last_error:
@@ -119,38 +171,91 @@ def init_db() -> None:
         client.close()
 
 
+@app.command("agents")
+def agents_cmd() -> None:
+    """List loadable agent packs (personas + phase system prompts)."""
+    packs = list_agents()
+    if not packs:
+        console.print("[yellow]No agent packs found.[/yellow] See agents/README.md")
+        raise typer.Exit(0)
+    table = Table(title="Agent packs", show_header=True)
+    table.add_column("id", style="cyan")
+    table.add_column("name")
+    table.add_column("description")
+    table.add_column("targets")
+    for p in packs:
+        table.add_row(
+            p.id,
+            p.name,
+            p.description[:80],
+            ", ".join(p.target_repos) if p.target_repos else "—",
+        )
+    console.print(table)
+    console.print("[dim]Use: neo start \"…\" --agent <id>   or  NEO_AGENT=<id>[/dim]")
+
+
 @app.command("start")
 def start(
-    task: str = typer.Argument(..., help="Task description for the new session"),
-    provider: Optional[str] = typer.Option(
-        None, "--provider", "-p", help="mock | grok_build | xai (default: env NEO_PROVIDER or mock)"
+    task: str | None = typer.Argument(
+        None,
+        help="Task description, or '-' to read stdin. Prefer --task-file for long briefs.",
     ),
-    steps: Optional[int] = typer.Option(
+    provider: str | None = typer.Option(
+        None, "--provider", "-p", help="mock | grok_build | copilot | xai"
+    ),
+    steps: int | None = typer.Option(
         None, "--steps", "-n", help="Max loop iterations this run (default: settings)"
     ),
     no_run: bool = typer.Option(
         False, "--no-run", help="Create session only; do not enter the loop"
     ),
+    agent: str | None = typer.Option(
+        None, "--agent", "-a", help="Agent pack id (e.g. sysadmin). Default: NEO_AGENT"
+    ),
+    task_file: Path | None = typer.Option(
+        None,
+        "--task-file",
+        "-f",
+        help="Read task brief from a markdown/text file",
+        exists=False,
+        dir_okay=False,
+        readable=True,
+    ),
 ) -> None:
     """Start a new session: INIT → PLAN → ACT → …"""
     settings = get_settings()
+    task_text = _resolve_task_text(task, task_file)
+    summary = task_summary(task_text)
+    agent_profile = _resolve_agent(agent)
     client = _client()
     _require_neo4j(client)
     try:
         setup_schema(client)
-        session = Session(task=task, status=SessionStatus.ACTIVE, state=HarnessState.INIT)
+        session = Session(
+            task=task_text,
+            status=SessionStatus.ACTIVE,
+            state=HarnessState.INIT,
+            metadata={"task_summary": summary},
+        )
         queries.upsert_session(client, session)
         _save_active(session.id)
 
         console.print(Panel.fit(f"[bold]Started session[/bold] {session.id}", border_style="green"))
         _print_session(session)
+        if agent_profile:
+            console.print(
+                f"[dim]Agent: {agent_profile.id} ({agent_profile.name}) · "
+                f"{agent_profile.root}[/dim]"
+            )
 
         if no_run:
-            console.print("[dim]Created without running loop (--no-run). Use `neo resume` later.[/dim]")
+            console.print(
+                "[dim]Created without running loop (--no-run). Use `neo resume` later.[/dim]"
+            )
             return
 
         prov = get_provider(provider or settings.provider)
-        memory = MemoryBundle.from_client(client, goal=task)
+        memory = MemoryBundle.from_client(client, goal=summary or task_text)
         budget = Budget(
             max_steps=settings.max_steps,
             max_tokens=settings.max_tokens,
@@ -162,8 +267,10 @@ def start(
             memory=memory,
             budget=budget,
             max_iterations=steps or settings.loop_iterations,
+            agent=agent_profile,
         )
-        console.print(f"[dim]Provider: {prov.name} · running loop…[/dim]")
+        agent_label = agent_profile.id if agent_profile else "default"
+        console.print(f"[dim]Provider: {prov.name} · agent: {agent_label} · running loop…[/dim]")
         result = asyncio.run(loop.run(session, steps=steps or settings.loop_iterations))
 
         console.print()
@@ -182,11 +289,15 @@ def start(
 @app.command("resume")
 def resume(
     session_id: str = typer.Argument(..., help="Session id to resume"),
-    provider: Optional[str] = typer.Option(None, "--provider", "-p"),
-    steps: Optional[int] = typer.Option(None, "--steps", "-n"),
+    provider: str | None = typer.Option(None, "--provider", "-p"),
+    steps: int | None = typer.Option(None, "--steps", "-n"),
+    agent: str | None = typer.Option(
+        None, "--agent", "-a", help="Agent pack id (e.g. sysadmin). Default: NEO_AGENT"
+    ),
 ) -> None:
     """Resume an existing session with full Neo4j context."""
     settings = get_settings()
+    agent_profile = _resolve_agent(agent)
     client = _client()
     _require_neo4j(client)
     try:
@@ -241,8 +352,13 @@ def resume(
             memory=memory,
             budget=budget,
             max_iterations=steps or settings.loop_iterations,
+            agent=agent_profile,
         )
-        console.print(f"[dim]Provider: {prov.name} · {len(episodes)} prior episodes · running…[/dim]")
+        agent_label = agent_profile.id if agent_profile else "default"
+        console.print(
+            f"[dim]Provider: {prov.name} · agent: {agent_label} · "
+            f"{len(episodes)} prior episodes · running…[/dim]"
+        )
         result = asyncio.run(loop.run(session, steps=steps or settings.loop_iterations))
 
         console.print()
@@ -258,7 +374,7 @@ def resume(
 
 @app.command("status")
 def status(
-    session_id: Optional[str] = typer.Option(
+    session_id: str | None = typer.Option(
         None, "--session", "-s", help="Session id (default: active local pointer or latest active)"
     ),
     all_sessions: bool = typer.Option(False, "--all", "-a", help="List recent sessions"),
@@ -280,7 +396,7 @@ def status(
                     s.id[:8] + "…",
                     s.status.value,
                     s.state.value,
-                    s.task[:48] + ("…" if len(s.task) > 48 else ""),
+                    task_summary(s.task, 48),
                     str(s.updated_at)[:19],
                 )
             console.print(table)
@@ -314,7 +430,7 @@ def status(
 
 @app.command("end")
 def end(
-    session_id: Optional[str] = typer.Option(
+    session_id: str | None = typer.Option(
         None, "--session", "-s", help="Session id (default: active)"
     ),
     fail: bool = typer.Option(False, "--fail", help="Mark as failed instead of completed"),
@@ -340,12 +456,13 @@ def end(
         # Best-effort end-of-session reflection if still mid-loop.
         if session.state not in (HarnessState.DONE, HarnessState.FAILED) and session.state != HarnessState.INIT:
             try:
-                from neo_harness.harness.reflection import run_reflection
                 from neo_harness.harness.memory import Neo4jEpisodicMemory
+                from neo_harness.harness.reflection import run_reflection
 
                 prov = get_provider(settings.provider)
                 episodic = Neo4jEpisodicMemory(client)
                 recent = episodic.list_for_session(session.id, limit=15)
+                agent_profile = _resolve_agent(None)
                 reflection = asyncio.run(
                     run_reflection(
                         prov,
@@ -353,6 +470,7 @@ def end(
                         plan=None,
                         recent_episodes=recent,
                         trigger=ReflectionTrigger.SESSION_END,
+                        agent=agent_profile,
                     )
                 )
                 episodic.store_reflection(reflection)
