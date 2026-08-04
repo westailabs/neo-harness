@@ -21,6 +21,11 @@ from neo_harness.harness.memory import MemoryBundle
 from neo_harness.neo4j import queries
 from neo_harness.neo4j.client import Neo4jClient
 from neo_harness.neo4j.schema import setup_schema
+from neo_harness.profiles import (
+    apply_profile_to_budget_kwargs,
+    get_profile,
+    profile_loop_iterations,
+)
 from neo_harness.providers import get_provider
 from neo_harness.schemas.reflection import ReflectionTrigger
 from neo_harness.schemas.session import HarnessState, Session, SessionStatus
@@ -221,9 +226,19 @@ def start(
         dir_okay=False,
         readable=True,
     ),
+    profile: str | None = typer.Option(
+        None,
+        "--profile",
+        help="Run profile: default | cheap | deep (token/loop presets)",
+    ),
 ) -> None:
     """Start a new session: INIT → PLAN → ACT → …"""
     settings = get_settings()
+    try:
+        run_profile = get_profile(profile)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from exc
     task_text = _resolve_task_text(task, task_file)
     summary = task_summary(task_text)
     agent_profile = _resolve_agent(agent)
@@ -235,7 +250,10 @@ def start(
             task=task_text,
             status=SessionStatus.ACTIVE,
             state=HarnessState.INIT,
-            metadata={"task_summary": summary},
+            metadata={
+                "task_summary": summary,
+                "profile": run_profile.name,
+            },
         )
         queries.upsert_session(client, session)
         _save_active(session.id)
@@ -247,6 +265,10 @@ def start(
                 f"[dim]Agent: {agent_profile.id} ({agent_profile.name}) · "
                 f"{agent_profile.root}[/dim]"
             )
+        if run_profile.name != "default":
+            console.print(
+                f"[dim]Profile: {run_profile.name} — {run_profile.description}[/dim]"
+            )
 
         if no_run:
             console.print(
@@ -256,22 +278,22 @@ def start(
 
         prov = get_provider(provider or settings.provider)
         memory = MemoryBundle.from_client(client, goal=summary or task_text)
-        budget = Budget(
-            max_steps=settings.max_steps,
-            max_tokens=settings.max_tokens,
-            reflect_every_n_actions=settings.reflect_every_n,
-        )
+        budget = Budget(**apply_profile_to_budget_kwargs(run_profile, settings))
+        iters = profile_loop_iterations(run_profile, settings, steps)
         loop = HarnessLoop(
             client=client,
             provider=prov,
             memory=memory,
             budget=budget,
-            max_iterations=steps or settings.loop_iterations,
+            max_iterations=iters,
             agent=agent_profile,
         )
         agent_label = agent_profile.id if agent_profile else "default"
-        console.print(f"[dim]Provider: {prov.name} · agent: {agent_label} · running loop…[/dim]")
-        result = asyncio.run(loop.run(session, steps=steps or settings.loop_iterations))
+        console.print(
+            f"[dim]Provider: {prov.name} · agent: {agent_label} · "
+            f"profile: {run_profile.name} · running loop…[/dim]"
+        )
+        result = asyncio.run(loop.run(session, steps=iters))
 
         console.print()
         for line in result.history:
@@ -294,9 +316,19 @@ def resume(
     agent: str | None = typer.Option(
         None, "--agent", "-a", help="Agent pack id (e.g. sysadmin). Default: NEO_AGENT"
     ),
+    profile: str | None = typer.Option(
+        None,
+        "--profile",
+        help="Run profile: default | cheap | deep",
+    ),
 ) -> None:
     """Resume an existing session with full Neo4j context."""
     settings = get_settings()
+    try:
+        run_profile = get_profile(profile)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from exc
     agent_profile = _resolve_agent(agent)
     client = _client()
     _require_neo4j(client)
@@ -338,28 +370,25 @@ def resume(
         for ep in episodes[-10:]:
             memory.working.push_observation(ep.summary, meta={"kind": ep.kind.value})
 
-        budget = Budget(
-            max_steps=settings.max_steps,
-            max_tokens=settings.max_tokens,
-            reflect_every_n_actions=settings.reflect_every_n,
-        )
+        budget = Budget(**apply_profile_to_budget_kwargs(run_profile, settings))
         # Account for prior steps roughly so budgets still apply.
-        budget.steps_used = min(session.step_count, settings.max_steps - 1)
+        budget.steps_used = min(session.step_count, max(budget.max_steps - 1, 0))
+        iters = profile_loop_iterations(run_profile, settings, steps)
 
         loop = HarnessLoop(
             client=client,
             provider=prov,
             memory=memory,
             budget=budget,
-            max_iterations=steps or settings.loop_iterations,
+            max_iterations=iters,
             agent=agent_profile,
         )
         agent_label = agent_profile.id if agent_profile else "default"
         console.print(
             f"[dim]Provider: {prov.name} · agent: {agent_label} · "
-            f"{len(episodes)} prior episodes · running…[/dim]"
+            f"profile: {run_profile.name} · {len(episodes)} prior episodes · running…[/dim]"
         )
-        result = asyncio.run(loop.run(session, steps=steps or settings.loop_iterations))
+        result = asyncio.run(loop.run(session, steps=iters))
 
         console.print()
         for line in result.history:

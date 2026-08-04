@@ -1,6 +1,7 @@
 # Plan: token diet + workspace embed
 
-**Status:** agreed direction · ready to implement  
+**Status:** fence largely implemented on `feat/token-diet-and-embed` · lab-validated  
+
 **Owner:** West AI Labs  
 **Repo:** `neo-harness` (this tree)  
 **Working branch (implementation):** `feat/token-diet-and-embed`  
@@ -175,3 +176,14 @@ After this fence, we can say:
 | 2026-08-04 | OAP/corp = pull pin + flavor; do not fork core for org features. |
 | 2026-08-04 | Configured monorepo ≠ harness; token demo is bounded jobs vs fat chat. |
 | 2026-08-04 | Next build fence = token diet + workspace embed only. |
+| 2026-08-04 | Lab validation: mock DONE + copilot/gpt-5-mini tools-on DONE (`docs/selfcheck-note.md`). |
+
+## 10. Lab validation log (2026-08-04)
+
+| Run | Provider | Result |
+|-----|----------|--------|
+| Mock self-check | `mock` + `sysadmin` + `--task-file` | **DONE** · task display truncated to heading |
+| Live self-check | `copilot` / `gpt-5-mini` / effort `low` + tools | **DONE** · created `docs/selfcheck-note.md` · 4 ACT / 1 REFLECT |
+| Status UI | `neo status --all` | Shows short task titles, not full markdown body |
+
+Remaining optional in fence: JFrog publish (out of scope), full wsl-shurtugal Makefile target.

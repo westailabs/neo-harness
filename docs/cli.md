@@ -49,6 +49,7 @@ uv run neo start "…" --no-run            # create Session only; do not enter l
 | `-p / --provider` | Override `NEO_PROVIDER` |
 | `-a / --agent` | Agent pack id (override `NEO_AGENT`); e.g. `sysadmin` |
 | `-n / --steps` | Cap harness loop iterations for this invocation |
+| `--profile` | `default` \| `cheap` \| `deep` — loop/reflect presets |
 | `--no-run` | Persist session in INIT/active without calling the model |
 
 On start: schema ensure, upsert `Session`, save active id, optionally `HarnessLoop.run`.
