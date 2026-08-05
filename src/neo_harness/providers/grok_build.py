@@ -10,13 +10,13 @@ import subprocess
 from typing import Any
 
 from neo_harness.providers.base import ReasoningProvider
+from neo_harness.providers.fallback import raise_or_fallback, resolve_fallback
 from neo_harness.providers.json_util import (
     ACT_SCHEMA,
     PLAN_SCHEMA,
     REFLECT_SCHEMA,
     from_grok_headless,
 )
-from neo_harness.providers.mock import MockProvider
 from neo_harness.schemas.plan import Plan, PlanStep
 from neo_harness.schemas.reflection import NextAction, Reflection, ReflectionTrigger
 
@@ -44,7 +44,7 @@ class GrokBuildProvider(ReasoningProvider):
           [--model …]
 
     Response is a JSON envelope; structured fields live under ``structuredOutput``.
-    Falls back to MockProvider if the binary is missing or a call fails.
+    Falls back per NEO_PROVIDER_FALLBACK (mock default, or none = fail-closed).
     """
 
     name = "grok_build"
@@ -59,7 +59,7 @@ class GrokBuildProvider(ReasoningProvider):
         max_turns_act: int = 8,
         allow_tools_on_act: bool | None = None,
         cwd: str | None = None,
-        fallback: ReasoningProvider | None = None,
+        fallback: ReasoningProvider | None | object = ...,  # noqa: B008
     ) -> None:
         self.command = command or os.environ.get("GROK_BUILD_CMD") or "grok"
         self.model = model or os.environ.get("GROK_MODEL") or os.environ.get("NEO_GROK_MODEL")
@@ -78,7 +78,7 @@ class GrokBuildProvider(ReasoningProvider):
             )
         self.allow_tools_on_act = allow_tools_on_act
         self.cwd = cwd or os.environ.get("NEO_PROVIDER_CWD") or os.getcwd()
-        self._fallback = fallback or MockProvider()
+        self._fallback = resolve_fallback(fallback)
         self._binary = self.command.split()[0]
         self._available = shutil.which(self._binary) is not None
 
@@ -172,7 +172,10 @@ class GrokBuildProvider(ReasoningProvider):
             allow_tools=False,
         )
         if not data:
-            return await self._fallback.plan(system=system, prompt=prompt, session_id=session_id)
+            fb = raise_or_fallback(
+                self._fallback, provider_name=self.name, reason="invoke/binary failed"
+            )
+            return await fb.plan(system=system, prompt=prompt, session_id=session_id)
 
         steps_raw = data.get("steps") or []
         steps = [
@@ -185,7 +188,10 @@ class GrokBuildProvider(ReasoningProvider):
             if isinstance(s, dict)
         ]
         if not steps:
-            return await self._fallback.plan(system=system, prompt=prompt, session_id=session_id)
+            fb = raise_or_fallback(
+                self._fallback, provider_name=self.name, reason="empty plan steps"
+            )
+            return await fb.plan(system=system, prompt=prompt, session_id=session_id)
 
         return Plan(
             session_id=session_id,
@@ -217,7 +223,10 @@ class GrokBuildProvider(ReasoningProvider):
             allow_tools=self.allow_tools_on_act,
         )
         if not data:
-            return await self._fallback.act(
+            fb = raise_or_fallback(
+                self._fallback, provider_name=self.name, reason="act invoke failed"
+            )
+            return await fb.act(
                 system=system, prompt=prompt, session_id=session_id, step=step
             )
         return {
@@ -248,9 +257,10 @@ class GrokBuildProvider(ReasoningProvider):
             allow_tools=False,
         )
         if not data:
-            return await self._fallback.reflect(
-                system=system, prompt=prompt, session_id=session_id
+            fb = raise_or_fallback(
+                self._fallback, provider_name=self.name, reason="reflect invoke failed"
             )
+            return await fb.reflect(system=system, prompt=prompt, session_id=session_id)
         try:
             next_action = NextAction(str(data.get("next_action", "continue")))
         except ValueError:

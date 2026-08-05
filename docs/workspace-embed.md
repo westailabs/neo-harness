@@ -5,6 +5,18 @@ monorepos, product trees) **depend on it**; they do not re-implement the state m
 
 ## Bootstrap pattern
 
+Preferred (from neo-harness install):
+
+```bash
+cd /path/to/your-git-repo
+neo init-workspace --pack workspace
+cp env.neo.example .env   # set NEO4J_PASSWORD
+./scripts/neo providers
+./scripts/neo start --task-file jobs/smoke-mock.md --agent workspace -p mock
+```
+
+Manual pattern:
+
 ```text
 1. git clone <workspace>
 2. python3 -m venv .venv-neo && .venv-neo/bin/pip install neo-harness==x.y
@@ -12,6 +24,8 @@ monorepos, product trees) **depend on it**; they do not re-implement the state m
 3. Configure Neo4j + provider (env file or exports; never commit secrets)
 4. neo start --task-file jobs/….md --agent <pack>
 ```
+
+See [init-workspace.md](./init-workspace.md).
 
 ### Editable (local development of the harness)
 
