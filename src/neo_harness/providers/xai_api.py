@@ -10,7 +10,7 @@ from typing import Any
 import httpx
 
 from neo_harness.providers.base import ReasoningProvider
-from neo_harness.providers.mock import MockProvider
+from neo_harness.providers.fallback import raise_or_fallback, resolve_fallback
 from neo_harness.schemas.plan import Plan, PlanStep
 from neo_harness.schemas.reflection import NextAction, Reflection, ReflectionTrigger
 
@@ -24,7 +24,7 @@ class XAIAPIProvider(ReasoningProvider):
     """
     Calls the xAI chat completions API when XAI_API_KEY is set.
 
-    Without a key, delegates to MockProvider so offline demos still work.
+    Without a key or on failure, uses NEO_PROVIDER_FALLBACK (mock or none).
     """
 
     name = "xai_api"
@@ -36,7 +36,7 @@ class XAIAPIProvider(ReasoningProvider):
         base_url: str | None = None,
         model: str | None = None,
         timeout_s: float = 60.0,
-        fallback: ReasoningProvider | None = None,
+        fallback: ReasoningProvider | None | object = ...,
     ) -> None:
         self.api_key = api_key or os.environ.get("XAI_API_KEY")
         self.base_url = (base_url or os.environ.get("XAI_BASE_URL") or DEFAULT_BASE_URL).rstrip(
@@ -44,7 +44,7 @@ class XAIAPIProvider(ReasoningProvider):
         )
         self.model = model or os.environ.get("XAI_MODEL") or DEFAULT_MODEL
         self.timeout_s = timeout_s
-        self._fallback = fallback or MockProvider()
+        self._fallback = resolve_fallback(fallback)
 
     @property
     def configured(self) -> bool:
@@ -117,7 +117,8 @@ class XAIAPIProvider(ReasoningProvider):
                     assumptions=list(data.get("assumptions") or []),
                     risks=list(data.get("risks") or []),
                 )
-        return await self._fallback.plan(system=system, prompt=prompt, session_id=session_id)
+        fb = raise_or_fallback(self._fallback, provider_name=self.name, reason="plan failed")
+        return await fb.plan(system=system, prompt=prompt, session_id=session_id)
 
     async def act(
         self,
@@ -140,7 +141,8 @@ class XAIAPIProvider(ReasoningProvider):
                     "output": data.get("output") or {},
                 }
             return {"summary": raw[:1000], "success": True}
-        return await self._fallback.act(
+        fb = raise_or_fallback(self._fallback, provider_name=self.name, reason="act failed")
+        return await fb.act(
             system=system, prompt=prompt, session_id=session_id, step=step
         )
 
@@ -177,6 +179,7 @@ class XAIAPIProvider(ReasoningProvider):
                     next_action=next_action,
                     confidence=float(data.get("confidence", 0.5)),
                 )
-        return await self._fallback.reflect(
+        fb = raise_or_fallback(self._fallback, provider_name=self.name, reason="reflect failed")
+        return await fb.reflect(
             system=system, prompt=prompt, session_id=session_id
         )

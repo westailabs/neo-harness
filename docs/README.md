@@ -24,6 +24,7 @@ the harness owns control flow, typed memory (Neo4j), budgets, and reflection.
 | [Threat model](./threat-model.md) | Assets, actors, mitigations (InfoSec) |
 | [Supply chain](./supply-chain.md) | Lockfile, SBOM, releases |
 | [CLI `policy` / `audit`](./cli.md) | Control plane + session export |
+| [init-workspace](./init-workspace.md) | Thin workspace embed (not full Forge) |
 
 **Package version:** see `src/neo_harness/__init__.py` / `pyproject.toml`  
 **Root overview:** [../README.md](../README.md)

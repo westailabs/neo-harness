@@ -13,12 +13,22 @@ p = get_provider("mock")          # mock | grok_build | copilot | xai
 CLI:
 
 ```bash
+uv run neo providers              # readiness: binaries / API keys
 uv run neo start "…" --provider grok_build
 # or NEO_PROVIDER=copilot in .env
 ```
 
-On hard failure, real providers **fall back to mock** so the loop can continue
-(logged as warnings).
+### Failure fallback (`NEO_PROVIDER_FALLBACK`)
+
+| Value | Behavior |
+|-------|----------|
+| `mock` (default) | On hard failure, fall back to MockProvider (lab/demo friendly) |
+| `none` | **Fail-closed** — raise; for InfoSec / apply-tier runs |
+
+```bash
+export NEO_PROVIDER_FALLBACK=none
+uv run neo start "…" --provider grok_build   # errors if grok unavailable
+```
 
 ## Comparison
 

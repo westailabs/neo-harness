@@ -114,14 +114,17 @@ NEO_ACT_ALLOW_TOOLS=1 \
 Treat **neo-harness as a library/CLI**; your monorepo or IaC tree is the workspace:
 
 ```bash
-# in your project
-python3 -m venv .venv-neo
-.venv-neo/bin/pip install -e /path/to/neo-harness   # or: pip install neo-harness==0.1.x when published
-export NEO_PROVIDER_CWD="$PWD"
-.venv-neo/bin/neo start --task-file jobs/demo.md --agent sysadmin -p mock
+# in your git project
+uv run neo init-workspace --pack workspace
+# or after pip install:
+neo init-workspace --pack workspace
+cp env.neo.example .env
+./scripts/neo providers
+./scripts/neo start --task-file jobs/smoke-mock.md --agent workspace -p mock
 ```
 
-See [docs/workspace-embed.md](./docs/workspace-embed.md).
+See [docs/init-workspace.md](./docs/init-workspace.md) and [docs/workspace-embed.md](./docs/workspace-embed.md).
+This is a **thin embed**, not a full Forge-style project generator.
 
 ## Project layout
 

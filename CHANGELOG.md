@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-05
+
+### Added
+
+- **`neo init-workspace`** — thin harness embed (env, jobs, starter pack, scripts/neo)
+- **`neo providers`** — readiness probes for mock / grok_build / copilot / xai
+- **`NEO_PROVIDER_FALLBACK=mock|none`** — soft mock fallback or fail-closed
+
+### Docs
+
+- [init-workspace.md](docs/init-workspace.md); providers/workspace-embed updates
+
 ## [0.2.0] - 2026-08-05
 
 ### Added

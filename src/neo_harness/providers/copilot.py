@@ -9,13 +9,13 @@ import subprocess
 from typing import Any
 
 from neo_harness.providers.base import ReasoningProvider
+from neo_harness.providers.fallback import raise_or_fallback, resolve_fallback
 from neo_harness.providers.json_util import (
     ACT_SCHEMA,
     PLAN_SCHEMA,
     REFLECT_SCHEMA,
     extract_json_object,
 )
-from neo_harness.providers.mock import MockProvider
 from neo_harness.schemas.plan import Plan, PlanStep
 from neo_harness.schemas.reflection import NextAction, Reflection, ReflectionTrigger
 
@@ -36,7 +36,7 @@ class CopilotProvider(ReasoningProvider):
           [-C cwd]
 
     Copilot does not take a JSON Schema flag; we instruct JSON-only and parse.
-    Falls back to MockProvider on missing binary or parse failure.
+    Falls back per NEO_PROVIDER_FALLBACK (mock default, or none = fail-closed).
     """
 
     name = "copilot"
@@ -50,7 +50,7 @@ class CopilotProvider(ReasoningProvider):
         timeout_s: float | None = None,
         allow_tools_on_act: bool | None = None,
         cwd: str | None = None,
-        fallback: ReasoningProvider | None = None,
+        fallback: ReasoningProvider | None | object = ...,
     ) -> None:
         self.command = command or os.environ.get("COPILOT_CMD") or "copilot"
         # Prefer mini + low effort for lab thrift (override via env anytime).
@@ -80,7 +80,7 @@ class CopilotProvider(ReasoningProvider):
             )
         self.allow_tools_on_act = allow_tools_on_act
         self.cwd = cwd or os.environ.get("NEO_PROVIDER_CWD") or os.getcwd()
-        self._fallback = fallback or MockProvider()
+        self._fallback = resolve_fallback(fallback)
         self._binary = self.command.split()[0]
         self._available = shutil.which(self._binary) is not None
 
@@ -175,7 +175,8 @@ class CopilotProvider(ReasoningProvider):
             allow_tools=False,
         )
         if not data or not data.get("steps"):
-            return await self._fallback.plan(system=system, prompt=prompt, session_id=session_id)
+            fb = raise_or_fallback(self._fallback, provider_name=self.name, reason="plan failed")
+            return await fb.plan(system=system, prompt=prompt, session_id=session_id)
 
         steps = [
             PlanStep(
@@ -187,7 +188,8 @@ class CopilotProvider(ReasoningProvider):
             if isinstance(s, dict)
         ]
         if not steps:
-            return await self._fallback.plan(system=system, prompt=prompt, session_id=session_id)
+            fb = raise_or_fallback(self._fallback, provider_name=self.name, reason="plan failed")
+            return await fb.plan(system=system, prompt=prompt, session_id=session_id)
 
         return Plan(
             session_id=session_id,
@@ -217,9 +219,8 @@ class CopilotProvider(ReasoningProvider):
             allow_tools=self.allow_tools_on_act,
         )
         if not data:
-            return await self._fallback.act(
-                system=system, prompt=prompt, session_id=session_id, step=step
-            )
+            fb = raise_or_fallback(self._fallback, provider_name=self.name, reason="act failed")
+            return await fb.act(system=system, prompt=prompt, session_id=session_id, step=step)
         return {
             "summary": str(data.get("summary") or data.get("raw_text") or step.description),
             "success": bool(data.get("success", True)),
@@ -246,9 +247,8 @@ class CopilotProvider(ReasoningProvider):
             allow_tools=False,
         )
         if not data or "what_happened" not in data:
-            return await self._fallback.reflect(
-                system=system, prompt=prompt, session_id=session_id
-            )
+            fb = raise_or_fallback(self._fallback, provider_name=self.name, reason="reflect failed")
+            return await fb.reflect(system=system, prompt=prompt, session_id=session_id)
         try:
             next_action = NextAction(str(data.get("next_action", "continue")))
         except ValueError:
