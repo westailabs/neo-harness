@@ -81,3 +81,6 @@ TODO.local.md
 
 # Local session dumps (not for public tree)
 docs/session-notes/
+
+# Serena (local IDE / agent memory — never commit)
+.serena/
