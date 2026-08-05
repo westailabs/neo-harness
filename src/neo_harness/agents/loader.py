@@ -194,6 +194,27 @@ def _load_pack(root: Path) -> AgentProfile:
     )
 
 
+def _is_harness_pack(root: Path) -> bool:
+    """True if dir looks like a neo-harness pack (not a free-form AGENT.md profile).
+
+    Require either:
+    - manifest.yml / manifest.yaml, or
+    - prompts/ with at least one of plan.md, act.md, reflect.md, persona.short.md
+
+    Free-form monorepo profiles (AGENT.md only) are ignored so workspaces like
+    west_ai_labs can keep both layouts under agents/.
+    """
+    if (root / "manifest.yml").is_file() or (root / "manifest.yaml").is_file():
+        return True
+    prompts = root / "prompts"
+    if not prompts.is_dir():
+        return False
+    for name in ("plan.md", "act.md", "reflect.md", "persona.short.md"):
+        if (prompts / name).is_file():
+            return True
+    return False
+
+
 def list_agents() -> list[AgentProfile]:
     """List all discoverable agent packs (first wins on id collisions)."""
     found: dict[str, AgentProfile] = {}
@@ -203,7 +224,7 @@ def list_agents() -> list[AgentProfile]:
         for child in sorted(base.iterdir()):
             if not child.is_dir() or child.name.startswith("."):
                 continue
-            if not (child / "AGENT.md").is_file() and not (child / "prompts").is_dir():
+            if not _is_harness_pack(child):
                 continue
             if child.name in found:
                 continue

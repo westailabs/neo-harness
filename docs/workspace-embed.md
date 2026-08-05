@@ -35,6 +35,11 @@ Search order (`agent_search_paths`):
 3. neo-harness repo `agents/` (built-ins like `sysadmin`)
 4. `~/.neo-harness/agents`
 
+A directory counts as a harness pack only if it has **`manifest.yml`** (or
+`.yaml`) **or** a `prompts/` tree with at least one of `plan.md` / `act.md` /
+`reflect.md` / `persona.short.md`. Free-form `AGENT.md`-only profiles (e.g.
+chat role cards in monorepos) are **not** listed as packs.
+
 ## Token thrift (defaults)
 
 | Knob | Default | Role |
