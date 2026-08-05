@@ -51,7 +51,9 @@ docker run -d --name neo4j-harness \
 Browser: http://localhost:7474
 
 If you already run Neo4j on different host ports, set `NEO4J_URI` in `.env`
-(for example `bolt://localhost:17687`) to match that instance.
+(for example `bolt://localhost:17687`) to match that instance. A timeout on
+default `7687` usually means the server is on another host port — see
+[troubleshooting FAQ](./troubleshooting.md#faq--tip-init-db-times-out-on-localhost7687).
 
 ## First run
 

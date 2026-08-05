@@ -21,7 +21,7 @@ the harness owns control flow, typed memory (Neo4j), budgets, and reflection.
 | [GCP overview](./gcp.md) | How to use the harness on Google Cloud |
 | [GCP / Terraform / DBA](./gcp-terraform-dba.md) | Ops patterns: plan-only, drift, migrations, identity |
 | [Development](./development.md) | Layout, tests, extending the harness |
-| [Troubleshooting](./troubleshooting.md) | Venv warnings, auth failures, “frozen” UI |
+| [Troubleshooting](./troubleshooting.md) | Venv, Neo4j ports/`init-db` timeout FAQ, hung loops |
 | [Security & publishing](./security-and-publishing.md) | Secrets, bloat, pre-push audit |
 | [Policy](./policy.md) | Tiers (report/propose/apply) + path gates |
 | [Threat model](./threat-model.md) | Assets, actors, mitigations (InfoSec) |

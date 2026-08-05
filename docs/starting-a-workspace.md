@@ -158,6 +158,9 @@ NEO_PROVIDER_CWD=/home/you/projects/test   # absolute path to this workspace
   remapped ports). Do not casually point at shared production graphs.
 - Lab stacks sometimes expose Bolt on **non-default** host ports (e.g. `17687`).
   Set `NEO4J_URI` to match.
+- **`neo init-db` does not start Neo4j.** If you see a timeout on
+  `localhost:7687`, check `docker ps` port mappings — often the host Bolt port
+  is **17687**. FAQ: [troubleshooting.md](./troubleshooting.md#faq--tip-init-db-times-out-on-localhost7687).
 
 Fresh Docker (default ports):
 
