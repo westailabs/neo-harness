@@ -72,7 +72,12 @@ NEO_ACT_ALLOW_TOOLS=0
 NEO_PROVIDER_FALLBACK=mock
 # Fail-closed for InfoSec runs: NEO_PROVIDER_FALLBACK=none
 
+# Default pack id (must exist under $NEO_PROVIDER_CWD/agents/<id>/).
+# Built-in package packs only include sysadmin — workspace packs come from init-workspace.
 NEO_AGENT={pack_id}
+
+# Absolute path to THIS checkout (not another machine's path).
+# Prefer ./scripts/neo — it sets NEO_PROVIDER_CWD to the repo root automatically.
 NEO_PROVIDER_CWD={cwd}
 
 # Optional path gates (comma-separated globs under workspace)
@@ -151,9 +156,11 @@ This workspace embeds [neo-harness](https://github.com/westailabs/neo-harness)
 for bounded PLAN→ACT→REFLECT jobs (token-efficient vs full monorepo chat).
 
 ```bash
+# Prefer ./scripts/neo (loads .env + NEO_PROVIDER_CWD). Do not use bare .venv-neo/bin/neo.
 ./scripts/neo init-db          # once (needs Neo4j)
 ./scripts/neo providers
 ./scripts/neo policy
+./scripts/neo agents           # must list {pack_id}
 ./scripts/neo start --task-file jobs/smoke-mock.md --agent {pack_id} -p mock
 ```
 

@@ -1,5 +1,53 @@
 # Troubleshooting
 
+## Agent packs
+
+### FAQ: `Agent pack 'workspace' not found` — only `sysadmin` listed
+
+```text
+Agent pack 'workspace' not found. … Available: ['sysadmin']
+```
+
+**This is usually not a missing package.** neo-harness only **ships** the built-in
+`sysadmin` pack. The **`workspace`** pack is created **in your project** by
+`neo init-workspace --pack workspace` → `agents/workspace/`.
+
+| Cause | Fix |
+|-------|-----|
+| Never ran `init-workspace` | `neo init-workspace --pack workspace` at the **project** root |
+| Called `.venv-neo/bin/neo` directly | Use **`./scripts/neo …`** (loads `.env`, sets `NEO_PROVIDER_CWD`) |
+| `NEO_PROVIDER_CWD` wrong / unset | Must be the absolute path of the repo that contains `agents/` |
+| `.env` has `NEO_AGENT=workspace` but pack missing | Run init-workspace, or set `NEO_AGENT` to an existing pack |
+| Monorepo is west_ai_labs-shaped | Use **`--agent platform`** (pack is `agents/platform/`), not `workspace` |
+
+```bash
+# Preferred happy path after init-workspace
+cd /path/to/your-project
+./scripts/neo agents
+./scripts/neo start --task-file jobs/smoke-mock.md --agent workspace -p mock
+
+# If you insist on the venv binary (must set CWD yourself):
+export NEO_PROVIDER_CWD="$PWD"
+set -a && source .env && set +a
+.venv-neo/bin/neo agents
+.venv-neo/bin/neo start --task-file jobs/smoke-mock.md --agent workspace -p mock
+```
+
+**Do not** treat this command as complete without a pack:
+
+```bash
+# Incomplete — relies on NEO_AGENT from .env *and* correct NEO_PROVIDER_CWD
+.venv-neo/bin/neo start --task-file jobs/smoke-mock.md -p mock
+```
+
+If `NEO_AGENT=workspace` is in `.env` but you invoke the binary without loading
+`.env` / CWD, discovery only sees package packs (`sysadmin`) and start fails.
+
+See [starting-a-workspace.md](./starting-a-workspace.md) and
+[workspace-embed.md](./workspace-embed.md).
+
+---
+
 ## uv / venv
 
 ### Warning: `VIRTUAL_ENV` does not match `.venv`

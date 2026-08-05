@@ -245,8 +245,23 @@ def load_agent(agent_id: str | None) -> AgentProfile | None:
     for profile in list_agents():
         if profile.id.lower() == key or profile.root.name.lower() == key:
             return profile
+    available = [a.id for a in list_agents()]
+    available_display = available or ["(none)"]
     searched = ", ".join(str(p) for p in agent_search_paths())
+    hint = (
+        "\n\nHint: neo-harness only *ships* the built-in `sysadmin` pack. "
+        "Names like `workspace` / `platform` live under the *project* "
+        "`agents/<id>/` and require NEO_PROVIDER_CWD to that project.\n"
+        "  1. Prefer ./scripts/neo (loads .env and sets NEO_PROVIDER_CWD).\n"
+        "     Bare .venv-neo/bin/neo does *not* load .env or set CWD → often only sysadmin.\n"
+        "  2. Create a starter pack: neo init-workspace --pack workspace\n"
+        "  3. Or: export NEO_PROVIDER_CWD=\"$PWD\" and ensure agents/<id>/ exists.\n"
+        "  4. List packs: ./scripts/neo agents\n"
+        f"  5. Smoke: ./scripts/neo start --task-file jobs/smoke-mock.md "
+        f"--agent {agent_id} -p mock\n"
+        "  west_ai_labs monorepo uses --agent platform (not workspace)."
+    )
     raise FileNotFoundError(
         f"Agent pack '{agent_id}' not found. Searched: {searched}. "
-        f"Available: {[a.id for a in list_agents()] or '(none)'}"
+        f"Available: {available_display}.{hint}"
     )

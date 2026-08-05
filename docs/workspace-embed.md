@@ -9,20 +9,33 @@ Preferred (from neo-harness install):
 
 ```bash
 cd /path/to/your-git-repo
-neo init-workspace --pack workspace
-cp env.neo.example .env   # set NEO4J_PASSWORD
+neo init-workspace --pack workspace   # creates agents/workspace + scripts/neo
+cp env.neo.example .env               # set NEO4J_PASSWORD (+ fix NEO_PROVIDER_CWD if wrong)
 ./scripts/neo providers
+./scripts/neo agents                  # must list workspace
 ./scripts/neo start --task-file jobs/smoke-mock.md --agent workspace -p mock
 ```
+
+**Entrypoint rule:** use **`./scripts/neo`**, not bare `.venv-neo/bin/neo`.
+
+| Entrypoint | Loads `.env`? | Sets `NEO_PROVIDER_CWD`? | Typical packs seen |
+|------------|---------------|--------------------------|--------------------|
+| `./scripts/neo …` | yes | yes (repo root) | workspace + sysadmin |
+| `.venv-neo/bin/neo …` | **no** | only if you exported it | often **sysadmin only** |
+
+`env.neo.example` sets `NEO_AGENT=workspace`. That only works when the pack
+exists under `$NEO_PROVIDER_CWD/agents/workspace`. Without CWD, start fails
+with “only sysadmin available” — see [troubleshooting](./troubleshooting.md#faq-agent-pack-workspace-not-found--only-sysadmin-listed).
 
 Manual pattern:
 
 ```text
 1. git clone <workspace>
-2. python3 -m venv .venv-neo && .venv-neo/bin/pip install neo-harness==x.y
+2. neo init-workspace --pack workspace   # do not skip
+3. python3 -m venv .venv-neo && .venv-neo/bin/pip install neo-harness==x.y
    # lab: pip install -e /path/to/neo-harness
-3. Configure Neo4j + provider (env file or exports; never commit secrets)
-4. neo start --task-file jobs/….md --agent <pack>
+4. cp env.neo.example .env  (set secrets + absolute NEO_PROVIDER_CWD if needed)
+5. ./scripts/neo start --task-file jobs/….md --agent workspace -p mock
 ```
 
 See [init-workspace.md](./init-workspace.md) and the full guide

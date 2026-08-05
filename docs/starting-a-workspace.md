@@ -190,17 +190,30 @@ cd ~/projects/test
 
 ## 6. First job (mock — no model spend)
 
+**Always use `./scripts/neo` for day-to-day runs.** It loads `.env` and sets
+`NEO_PROVIDER_CWD` to this repo so `agents/workspace` is discoverable.
+Calling `.venv-neo/bin/neo` alone often yields only the built-in `sysadmin`
+pack and fails with `Agent pack 'workspace' not found`.
+
 ```bash
 cd ~/projects/test
+
+./scripts/neo agents    # must list workspace (and usually sysadmin)
 
 ./scripts/neo start \
   --task-file jobs/smoke-mock.md \
   --agent workspace \
   -p mock
 
+# Equivalent only if .env is already loaded *and* NEO_AGENT=workspace:
+# ./scripts/neo start --task-file jobs/smoke-mock.md -p mock
+
 ./scripts/neo status --all
 ./scripts/neo audit <session-id> -o /tmp/test-audit.json
 ```
+
+If agents only show `sysadmin`, see
+[troubleshooting — workspace pack not found](./troubleshooting.md#faq-agent-pack-workspace-not-found--only-sysadmin-listed).
 
 ---
 
