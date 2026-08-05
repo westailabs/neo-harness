@@ -17,6 +17,7 @@ the harness owns control flow, typed memory (Neo4j), budgets, and reflection.
 | [Workspace embed](./workspace-embed.md) | Bootstrap, pip pin, pack search order, thrift defaults |
 | [init-workspace](./init-workspace.md) | CLI flags and files created by `neo init-workspace` |
 | [**Related projects**](./related-projects.md) | **nebulus-forge** (scaffold) vs neo-harness (runtime) |
+| [Decisions 2026-08-05](./decisions/2026-08-05-workspace-embed-forge-and-ops.md) | Session decisions: embed, Forge compose, Neo4j ops |
 | [Plan: token diet + embed](./plans/token-diet-and-workspace-embed.md) | Agreed direction + next implementation fence |
 | [GCP overview](./gcp.md) | How to use the harness on Google Cloud |
 | [GCP / Terraform / DBA](./gcp-terraform-dba.md) | Ops patterns: plan-only, drift, migrations, identity |
