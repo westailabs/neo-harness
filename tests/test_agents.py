@@ -17,6 +17,28 @@ def test_list_agents_includes_sysadmin() -> None:
     assert "sysadmin" in ids
 
 
+def test_list_agents_skips_agent_md_only_profiles(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Free-form AGENT.md profiles without manifest/prompts are not packs."""
+    agents = tmp_path / "agents"
+    free = agents / "jason-west"
+    free.mkdir(parents=True)
+    (free / "AGENT.md").write_text("# Jason West\nFree-form only.\n", encoding="utf-8")
+    pack = agents / "platform"
+    pack.mkdir()
+    (pack / "manifest.yml").write_text(
+        "id: platform\nname: Platform\ndescription: test pack\n",
+        encoding="utf-8",
+    )
+    (pack / "prompts").mkdir()
+    (pack / "prompts" / "plan.md").write_text("plan", encoding="utf-8")
+    monkeypatch.setenv("NEO_PROVIDER_CWD", str(tmp_path))
+    # Avoid other search roots polluting assertion of free-form skip
+    monkeypatch.delenv("NEO_AGENTS_DIR", raising=False)
+    ids = {p.id for p in list_agents()}
+    assert "platform" in ids
+    assert "jason-west" not in ids
+
+
 def test_load_sysadmin_uses_short_persona() -> None:
     agent = load_agent("sysadmin")
     assert agent is not None
