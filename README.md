@@ -23,6 +23,7 @@ Full docs: [`docs/`](./docs/README.md)
 | [Architecture](./docs/architecture.md) | State machine, memory, loop |
 | [CLI](./docs/cli.md) | `start` · `resume` · `status` · `end` |
 | [Providers](./docs/providers.md) | mock · grok_build · copilot · xai |
+| [Starting a workspace](./docs/starting-a-workspace.md) | New project → init → first mock job |
 | [Workspace embed](./docs/workspace-embed.md) | Use neo-harness inside your own repo |
 | [Security & publishing](./docs/security-and-publishing.md) | Secrets hygiene |
 | [Contributing](./CONTRIBUTING.md) | Dev setup and PRs |
@@ -123,8 +124,10 @@ cp env.neo.example .env
 ./scripts/neo start --task-file jobs/smoke-mock.md --agent workspace -p mock
 ```
 
-See [docs/init-workspace.md](./docs/init-workspace.md) and [docs/workspace-embed.md](./docs/workspace-embed.md).
-This is a **thin embed**, not a full Forge-style project generator.
+Full walkthrough: **[docs/starting-a-workspace.md](./docs/starting-a-workspace.md)**  
+(example path `~/projects/test`). Also [init-workspace](./docs/init-workspace.md),
+[workspace-embed](./docs/workspace-embed.md). Thin embed only — not a full
+Forge-style project generator.
 
 ## Project layout
 
