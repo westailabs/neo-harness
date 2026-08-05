@@ -23,6 +23,7 @@ The model is a **replaceable reasoning engine**. The harness owns:
 | [Neo4j](./docs/neo4j.md) | Schema, Browser queries |
 | [Configuration](./docs/configuration.md) | Environment variables |
 | [Usage & demo](./docs/usage-and-demo.md) | How to use it · **demo script** |
+| [SysAdmin workflow](./docs/sysadmin-workflow.md) | Host IaC + `--agent sysadmin` · foobar walkthrough |
 | [GCP overview](./docs/gcp.md) | How to use the harness on Google Cloud |
 | [GCP / Terraform / DBA](./docs/gcp-terraform-dba.md) | Ops patterns for cloud & database work |
 | [Development](./docs/development.md) | Layout, tests, extensions |
@@ -65,6 +66,17 @@ Real model:
 ```bash
 NEO_ACT_ALLOW_TOOLS=0 uv run neo start "Draft a short design note for typed memory" --provider copilot
 # or: --provider grok_build
+```
+
+**SysAdmin agent** (workstation IaC repos — Ansible, packages, roles):
+
+```bash
+uv run neo agents
+NEO_ACT_ALLOW_TOOLS=1 \
+  NEO_PROVIDER_CWD=~/projects/wsl-shurtugal \
+  uv run neo start "Add a status check for ruff to make status" \
+    --provider grok_build \
+    --agent sysadmin
 ```
 
 Long runs look quiet; watch with `uv run neo status -s <id>` in another terminal.

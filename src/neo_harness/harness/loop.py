@@ -6,12 +6,18 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
+from neo_harness.agents.loader import (
+    DEFAULT_ACT_SYSTEM,
+    DEFAULT_PLAN_SYSTEM,
+    AgentProfile,
+)
+from neo_harness.config import get_settings
 from neo_harness.harness.budget import Budget, BudgetExceededError
 from neo_harness.harness.memory import MemoryBundle
 from neo_harness.harness.reflection import next_state_for_reflection, run_reflection
 from neo_harness.harness.state_machine import IllegalTransitionError, StateMachine
-from neo_harness.neo4j.client import Neo4jClient
 from neo_harness.neo4j import queries
+from neo_harness.neo4j.client import Neo4jClient
 from neo_harness.providers.base import ReasoningProvider
 from neo_harness.schemas.episode import Episode, EpisodeKind
 from neo_harness.schemas.plan import Plan, PlanStep, StepStatus
@@ -20,15 +26,15 @@ from neo_harness.schemas.session import HarnessState, Session, SessionStatus
 
 logger = logging.getLogger(__name__)
 
+# Back-compat aliases (tests / importers)
+PLAN_SYSTEM = DEFAULT_PLAN_SYSTEM
+ACT_SYSTEM = DEFAULT_ACT_SYSTEM
 
-PLAN_SYSTEM = """You are a planning engine inside an agent harness.
-Produce a short, concrete multi-step plan for the task.
-Each step must be actionable and ordered."""
 
-
-ACT_SYSTEM = """You are an action engine inside an agent harness.
-Given the current plan step and context, describe the action taken and its result.
-This is a simulated/placeholder environment unless tools are wired."""
+def _clip(text: str, max_chars: int) -> str:
+    if max_chars <= 0 or len(text) <= max_chars:
+        return text
+    return text[: max(0, max_chars - 16)].rstrip() + "\n…[truncated]"
 
 
 @dataclass
@@ -56,14 +62,47 @@ class HarnessLoop:
         budget: Budget | None = None,
         *,
         max_iterations: int = 20,
+        agent: AgentProfile | None = None,
     ) -> None:
         self.client = client
         self.provider = provider
         self.memory = memory
         self.budget = budget or Budget()
         self.max_iterations = max_iterations
+        self.agent = agent
         self.machine = StateMachine()
         self.plan: Plan | None = None
+
+    def _system(self, phase: str) -> str:
+        if self.agent is not None:
+            return self.agent.system_for(phase)
+        if phase == "plan":
+            return DEFAULT_PLAN_SYSTEM
+        if phase == "act":
+            return DEFAULT_ACT_SYSTEM
+        raise ValueError(f"Unknown phase for default system prompt: {phase}")
+
+    def _task_brief(self, session: Session) -> str:
+        """Prefer short summary from metadata; else clip full task."""
+        meta = session.metadata or {}
+        summary = meta.get("task_summary")
+        if isinstance(summary, str) and summary.strip():
+            return summary.strip()
+        s = get_settings()
+        return _clip(session.task, min(500, s.prompt_max_chars_plan // 2))
+
+    def _skip_interval_reflect(self) -> bool:
+        """Token diet: skip interval REFLECT on short plans still progressing."""
+        if self.plan is None:
+            return False
+        s = get_settings()
+        max_steps = s.skip_interval_reflect_max_steps
+        if max_steps <= 0 or len(self.plan.steps) > max_steps:
+            return False
+        if any(st.status == StepStatus.FAILED for st in self.plan.steps):
+            return False
+        # Still have work — defer reflect until plan complete / error
+        return self.plan.next_pending_step() is not None
 
     def _persist_session(self, session: Session) -> None:
         session.state = self.machine.state
@@ -174,14 +213,17 @@ class HarnessLoop:
         return result
 
     async def _do_plan(self, session: Session, log: list[str]) -> None:
-        prompt = (
-            f"Task: {session.task}\n"
-            f"Goal: {self.memory.working.get_goal() or session.task}\n"
-            f"Recent observations: {self.memory.working.recent_observations(5)}\n"
-            "Produce an ordered plan with 2–6 concrete steps."
+        s = get_settings()
+        obs = self.memory.working.recent_observations(s.observation_tail)
+        prompt = _clip(
+            f"Task: {self._task_brief(session)}\n"
+            f"Goal: {self.memory.working.get_goal() or self._task_brief(session)}\n"
+            f"Recent observations: {obs}\n"
+            "Produce an ordered plan with 2–6 concrete steps.",
+            s.prompt_max_chars_plan,
         )
         plan = await self.provider.plan(
-            system=PLAN_SYSTEM,
+            system=self._system("plan"),
             prompt=prompt,
             session_id=session.id,
         )
@@ -220,14 +262,18 @@ class HarnessLoop:
             return
 
         step.status = StepStatus.IN_PROGRESS
-        prompt = (
+        s = get_settings()
+        # Prefer last N observations over full working-memory blob
+        obs = self.memory.working.recent_observations(s.observation_tail)
+        prompt = _clip(
             f"Goal: {self.plan.goal}\n"
             f"Current step [{step.index}]: {step.description}\n"
-            f"Context: {self.memory.working.context_blob()}\n"
-            "Execute this step (describe action and outcome)."
+            f"Recent observations: {obs}\n"
+            "Execute this step (describe action and outcome).",
+            s.prompt_max_chars_act,
         )
         action_result = await self.provider.act(
-            system=ACT_SYSTEM,
+            system=self._system("act"),
             prompt=prompt,
             session_id=session.id,
             step=step,
@@ -262,9 +308,12 @@ class HarnessLoop:
         log.append(f"OBSERVE: {text[:120]}")
 
         if self.budget.should_reflect():
-            self.machine.transition(HarnessState.REFLECT, reason="reflection interval")
-            log.append("OBSERVE → REFLECT (interval)")
-            return
+            if self._skip_interval_reflect():
+                log.append("OBSERVE: skip interval REFLECT (short plan, still progressing)")
+            else:
+                self.machine.transition(HarnessState.REFLECT, reason="reflection interval")
+                log.append("OBSERVE → REFLECT (interval)")
+                return
 
         if self.plan and self.plan.is_complete:
             self.machine.transition(HarnessState.REFLECT, reason="plan complete")
@@ -288,7 +337,8 @@ class HarnessLoop:
         if trigger == ReflectionTrigger.INTERVAL and self.plan and self.plan.is_complete:
             trigger = ReflectionTrigger.PLAN_COMPLETE
 
-        recent = self.memory.episodic.list_for_session(session.id, limit=15)
+        s = get_settings()
+        recent = self.memory.episodic.list_for_session(session.id, limit=s.episode_tail)
         reflection = await run_reflection(
             self.provider,
             session,
@@ -296,6 +346,8 @@ class HarnessLoop:
             recent,
             trigger,
             error=error,
+            agent=self.agent,
+            max_prompt_chars=s.prompt_max_chars_reflect,
         )
         self.memory.episodic.store_reflection(reflection)
         session.reflection_count += 1

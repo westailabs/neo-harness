@@ -21,6 +21,16 @@ See [security-and-publishing.md](./security-and-publishing.md) for the full audi
 | `NEO_LOOP_ITERATIONS` | `20` | Default max iterations per CLI run |
 | `NEO_ACT_ALLOW_TOOLS` | `1` (code) / often `0` in lab `.env` | Tools during ACT |
 | `NEO_PROVIDER_CWD` | process cwd | Working dir for CLI providers |
+| `NEO_AGENT` | — | Agent pack id (`sysadmin`, …); see `agents/README.md` |
+| `NEO_AGENTS_DIR` | — | Extra pack search root (after `$NEO_PROVIDER_CWD/agents`) |
+| `NEO_FULL_PERSONA` | off | Inject full `AGENT.md` into model prompts (costly) |
+| `NEO_PROMPT_MAX_CHARS_PLAN` | `4000` | PLAN user-prompt cap |
+| `NEO_PROMPT_MAX_CHARS_ACT` | `3000` | ACT user-prompt cap |
+| `NEO_PROMPT_MAX_CHARS_REFLECT` | `2500` | REFLECT user-prompt cap |
+| `NEO_EPISODE_TAIL` | `5` | Episodes passed into reflection |
+| `NEO_OBSERVATION_TAIL` | `3` | Observations in PLAN/ACT prompts |
+| `NEO_SKIP_INTERVAL_REFLECT_MAX_STEPS` | `3` | Skip interval reflect when plan ≤ N steps and progressing |
+| `NEO_TASK_DISPLAY_CHARS` | `120` | CLI status task truncation |
 
 ## Grok Build
 

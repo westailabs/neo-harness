@@ -34,19 +34,33 @@ Start a new session for a task description.
 
 ```bash
 uv run neo start "Task description here"
+uv run neo start --task-file /tmp/job.md --agent sysadmin
+uv run neo start - < /tmp/job.md --provider mock
 uv run neo start "…" --provider mock|grok_build|copilot|xai
+uv run neo start "…" --agent sysadmin    # workstation IaC persona
 uv run neo start "…" --steps 12          # max loop iterations this run
 uv run neo start "…" --no-run            # create Session only; do not enter loop
 ```
 
 | Option | Description |
 |--------|-------------|
-| `TASK` | Required positional task string |
+| `TASK` | Task string, or `-` for stdin (optional if `--task-file`) |
+| `-f / --task-file` | Read task brief from a file |
 | `-p / --provider` | Override `NEO_PROVIDER` |
+| `-a / --agent` | Agent pack id (override `NEO_AGENT`); e.g. `sysadmin` |
 | `-n / --steps` | Cap harness loop iterations for this invocation |
+| `--profile` | `default` \| `cheap` \| `deep` — loop/reflect presets |
 | `--no-run` | Persist session in INIT/active without calling the model |
 
 On start: schema ensure, upsert `Session`, save active id, optionally `HarnessLoop.run`.
+
+## `neo agents`
+
+List loadable agent packs (`agents/<id>/`).
+
+```bash
+uv run neo agents
+```
 
 ## `neo resume`
 
@@ -55,6 +69,7 @@ Resume an existing session by UUID.
 ```bash
 uv run neo resume <session_id>
 uv run neo resume <session_id> --provider copilot --steps 10
+uv run neo resume <session_id> --agent sysadmin
 ```
 
 - Loads session + recent episodes from Neo4j.

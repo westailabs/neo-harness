@@ -1,0 +1,4 @@
+id: sysadmin
+name: SysAdmin Agent
+description: Workstation and host IaC specialist — Ansible, packages, dotfiles, drift control
+target_repos: wsl-shurtugal, L213196-WSL2-Ubuntu, shurtugal-lnx

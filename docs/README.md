@@ -7,11 +7,14 @@ the harness owns control flow, typed memory (Neo4j), budgets, and reflection.
 |----------|----------|
 | [Quick Start](./quickstart.md) | Install, venv, Neo4j, first `neo start` |
 | [Architecture](./architecture.md) | State machine, memory layers, loop, ownership |
-| [CLI reference](./cli.md) | `start` · `resume` · `status` · `end` · `init-db` |
+| [CLI reference](./cli.md) | `start` · `resume` · `status` · `end` · `init-db` · `agents` |
 | [Providers](./providers.md) | `mock` · `grok_build` · `copilot` · `xai` |
 | [Neo4j](./neo4j.md) | Graph schema, constraints, Browser queries |
 | [Configuration](./configuration.md) | Environment variables and defaults |
 | [Usage & demo](./usage-and-demo.md) | How to use it well; 8-minute demo script |
+| [SysAdmin workflow](./sysadmin-workflow.md) | Host IaC via `--agent sysadmin` (foobar alias walkthrough) |
+| [Workspace embed](./workspace-embed.md) | Bootstrap, pip pin, pack search order, thrift defaults |
+| [Plan: token diet + embed](./plans/token-diet-and-workspace-embed.md) | Agreed direction + next implementation fence |
 | [GCP overview](./gcp.md) | How to use the harness on Google Cloud |
 | [GCP / Terraform / DBA](./gcp-terraform-dba.md) | Ops patterns: plan-only, drift, migrations, identity |
 | [Development](./development.md) | Layout, tests, extending the harness |

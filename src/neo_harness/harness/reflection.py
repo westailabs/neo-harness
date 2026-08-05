@@ -2,19 +2,27 @@
 
 from __future__ import annotations
 
+from neo_harness.agents.loader import DEFAULT_REFLECT_SYSTEM, AgentProfile
 from neo_harness.providers.base import ReasoningProvider
 from neo_harness.schemas.episode import Episode
 from neo_harness.schemas.plan import Plan
 from neo_harness.schemas.reflection import NextAction, Reflection, ReflectionTrigger
 from neo_harness.schemas.session import Session
 
+# Back-compat alias
+REFLECTION_SYSTEM_PROMPT = DEFAULT_REFLECT_SYSTEM
 
-REFLECTION_SYSTEM_PROMPT = """You are a structured reflection engine inside an agent harness.
-Given recent session context, produce a honest, concise reflection.
-You must choose next_action from: continue, replan, done, fail, block.
-Prefer continue when progress is being made; replan when the plan is wrong;
-done only when the goal is achieved; fail for unrecoverable errors; block for human input.
-"""
+
+def _task_line(session: Session) -> str:
+    meta = session.metadata or {}
+    summary = meta.get("task_summary")
+    if isinstance(summary, str) and summary.strip():
+        return summary.strip()
+    task = session.task.strip()
+    first = task.splitlines()[0] if task else ""
+    if len(first) > 200:
+        return first[:200] + "…"
+    return first or task[:200]
 
 
 def build_reflection_prompt(
@@ -23,10 +31,12 @@ def build_reflection_prompt(
     recent_episodes: list[Episode],
     trigger: ReflectionTrigger,
     error: str | None = None,
+    *,
+    max_prompt_chars: int = 2500,
 ) -> str:
     lines = [
-        f"Session task: {session.task}",
-        f"Current goal: {session.goal or session.task}",
+        f"Session task: {_task_line(session)}",
+        f"Current goal: {session.goal or _task_line(session)}",
         f"State: {session.state.value}",
         f"Steps so far: {session.step_count}, actions: {session.action_count}",
         f"Reflection trigger: {trigger.value}",
@@ -39,13 +49,16 @@ def build_reflection_prompt(
             lines.append(f"  [{step.status.value}] {step.index}. {step.description}")
     if recent_episodes:
         lines.append("Recent episodes:")
-        for ep in recent_episodes[-10:]:
-            lines.append(f"  - ({ep.kind.value}) {ep.summary}")
+        for ep in recent_episodes:
+            lines.append(f"  - ({ep.kind.value}) {ep.summary[:200]}")
     lines.append(
         "Respond with structured fields: what_happened, what_worked, what_failed, "
         "lessons, decisions, open_questions, next_action, confidence."
     )
-    return "\n".join(lines)
+    text = "\n".join(lines)
+    if max_prompt_chars > 0 and len(text) > max_prompt_chars:
+        return text[: max_prompt_chars - 16].rstrip() + "\n…[truncated]"
+    return text
 
 
 async def run_reflection(
@@ -55,6 +68,8 @@ async def run_reflection(
     recent_episodes: list[Episode],
     trigger: ReflectionTrigger,
     error: str | None = None,
+    agent: AgentProfile | None = None,
+    max_prompt_chars: int = 2500,
 ) -> Reflection:
     """
     Force a structured Reflection via the provider.
@@ -62,10 +77,18 @@ async def run_reflection(
     On provider failure, returns a conservative fallback reflection
     so the harness never stalls without a decision.
     """
-    prompt = build_reflection_prompt(session, plan, recent_episodes, trigger, error)
+    prompt = build_reflection_prompt(
+        session,
+        plan,
+        recent_episodes,
+        trigger,
+        error,
+        max_prompt_chars=max_prompt_chars,
+    )
+    system = agent.system_for("reflect") if agent is not None else DEFAULT_REFLECT_SYSTEM
     try:
         result = await provider.reflect(
-            system=REFLECTION_SYSTEM_PROMPT,
+            system=system,
             prompt=prompt,
             session_id=session.id,
         )

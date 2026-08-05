@@ -124,9 +124,28 @@ Providers **must not** own the outer control loop.
 Local convenience only: `~/.neo-harness/active_session.json`  
 **Neo4j remains authoritative.**
 
+## Agent packs
+
+Named personas under `agents/<id>/` specialize **system prompts only**.
+The harness still owns transitions, budgets, and memory writes.
+
+| Piece | Role |
+|-------|------|
+| `AGENT.md` | Full persona (appended to every phase system prompt) |
+| `prompts/plan.md` · `act.md` · `reflect.md` | Phase system prompts |
+| `manifest.yml` | id, name, description, target_repos |
+| CLI | `neo agents` · `neo start … --agent <id>` · `NEO_AGENT` |
+
+Built-in: **`sysadmin`** — workstation / host IaC
+(`wsl-shurtugal`, `L213196-WSL2-Ubuntu`, `shurtugal-lnx`).
+
+Loader: `neo_harness.agents.loader` — search order:
+`NEO_AGENTS_DIR` → repo `agents/` → `~/.neo-harness/agents`.
+
 ## Extension points
 
 - New provider: implement `ReasoningProvider`, register in `providers/__init__.py`.
+- New agent pack: add `agents/<id>/` with `AGENT.md` + `prompts/`; no code change required.
 - Tools during ACT: `NEO_ACT_ALLOW_TOOLS=1` (CLI providers).
 - Richer retrieval: extend `SemanticMemory.related` / full-text indexes already in schema.
 - Parallel sub-agents: spawn only from harness-owned ACT handlers, not from free model drift.
