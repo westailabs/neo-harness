@@ -29,6 +29,8 @@ from neo_harness.profiles import (
 from neo_harness.providers import get_provider
 from neo_harness.schemas.reflection import ReflectionTrigger
 from neo_harness.schemas.session import HarnessState, Session, SessionStatus
+from neo_harness.security.audit import export_audit
+from neo_harness.security.policy import PolicyTier, load_policy, path_allowed
 
 app = typer.Typer(
     name="neo",
@@ -37,6 +39,17 @@ app = typer.Typer(
     add_completion=False,
 )
 console = Console()
+
+
+def _load_run_policy():
+    """Policy for this process from settings + env."""
+    settings = get_settings()
+    return load_policy(
+        tier=settings.policy_tier,
+        allow=settings.path_allow or None,
+        deny=settings.path_deny or None,
+        workspace_root=settings.provider_cwd,
+    )
 
 # Local pointer so `neo status` / `neo end` work without always querying Neo4j.
 STATE_DIR = Path.home() / ".neo-harness"
@@ -276,6 +289,12 @@ def start(
             )
             return
 
+        policy = _load_run_policy()
+        # REPORT tier forces tools off regardless of NEO_ACT_ALLOW_TOOLS
+        if not policy.tools_allowed(settings.act_allow_tools):
+            import os
+
+            os.environ["NEO_ACT_ALLOW_TOOLS"] = "0"
         prov = get_provider(provider or settings.provider)
         memory = MemoryBundle.from_client(client, goal=summary or task_text)
         budget = Budget(**apply_profile_to_budget_kwargs(run_profile, settings))
@@ -287,11 +306,13 @@ def start(
             budget=budget,
             max_iterations=iters,
             agent=agent_profile,
+            policy=policy,
         )
         agent_label = agent_profile.id if agent_profile else "default"
         console.print(
             f"[dim]Provider: {prov.name} · agent: {agent_label} · "
-            f"profile: {run_profile.name} · running loop…[/dim]"
+            f"profile: {run_profile.name} · policy: {policy.tier.name.lower()} · "
+            f"running loop…[/dim]"
         )
         result = asyncio.run(loop.run(session, steps=iters))
 
@@ -365,6 +386,11 @@ def resume(
 
         # Hydrate working memory from recent episodes.
         episodes = queries.list_episodes(client, session.id, limit=20)
+        policy = _load_run_policy()
+        if not policy.tools_allowed(settings.act_allow_tools):
+            import os
+
+            os.environ["NEO_ACT_ALLOW_TOOLS"] = "0"
         prov = get_provider(provider or settings.provider)
         memory = MemoryBundle.from_client(client, goal=session.goal or session.task)
         for ep in episodes[-10:]:
@@ -382,11 +408,13 @@ def resume(
             budget=budget,
             max_iterations=iters,
             agent=agent_profile,
+            policy=policy,
         )
         agent_label = agent_profile.id if agent_profile else "default"
         console.print(
             f"[dim]Provider: {prov.name} · agent: {agent_label} · "
-            f"profile: {run_profile.name} · {len(episodes)} prior episodes · running…[/dim]"
+            f"profile: {run_profile.name} · policy: {policy.tier.name.lower()} · "
+            f"{len(episodes)} prior episodes · running…[/dim]"
         )
         result = asyncio.run(loop.run(session, steps=iters))
 
@@ -527,6 +555,94 @@ def end(
             )
         )
         _print_session(session)
+    finally:
+        client.close()
+
+
+@app.command("policy")
+def policy_cmd(
+    check_path: Path | None = typer.Option(
+        None,
+        "--check-path",
+        help="Test whether a path is allowed under current policy",
+    ),
+) -> None:
+    """Show active policy tier and path gates (InfoSec control plane)."""
+    policy = _load_run_policy()
+    table = Table(title="neo-harness policy", show_header=True)
+    table.add_column("key")
+    table.add_column("value")
+    table.add_row("tier", f"{policy.tier.name.lower()} ({int(policy.tier)})")
+    table.add_row(
+        "tools",
+        "allowed if NEO_ACT_ALLOW_TOOLS=1"
+        if policy.tier != PolicyTier.REPORT
+        else "forced off (report tier)",
+    )
+    table.add_row(
+        "workspace",
+        str(policy.workspace_root) if policy.workspace_root else "(unset NEO_PROVIDER_CWD)",
+    )
+    table.add_row(
+        "allow",
+        ", ".join(policy.allow_globs) if policy.allow_globs else "(all under workspace)",
+    )
+    deny_s = ", ".join(policy.deny_globs[:12])
+    if len(policy.deny_globs) > 12:
+        deny_s += "…"
+    table.add_row("deny", deny_s)
+    console.print(table)
+    if check_path is not None:
+        decision = path_allowed(check_path, policy)
+        style = "green" if decision.allowed else "red"
+        console.print(
+            f"[{style}]path {check_path}: "
+            f"{'ALLOWED' if decision.allowed else 'DENIED'}[/{style}] — {decision.reason}"
+        )
+
+
+@app.command("audit")
+def audit_cmd(
+    session_id: str = typer.Argument(..., help="Session id to export"),
+    out: Path = typer.Option(
+        Path("neo-audit.json"),
+        "--out",
+        "-o",
+        help="Output path (.json or .md)",
+    ),
+    no_redact: bool = typer.Option(
+        False,
+        "--no-redact",
+        help="Disable secret redaction (not recommended)",
+    ),
+    fmt: str | None = typer.Option(
+        None,
+        "--format",
+        help="json | md (default: from --out suffix)",
+    ),
+) -> None:
+    """Export a session audit package for operator / InfoSec review."""
+    settings = get_settings()
+    client = _client()
+    _require_neo4j(client)
+    try:
+        out_fmt = fmt
+        if out_fmt is None:
+            out_fmt = "md" if str(out).lower().endswith(".md") else "json"
+        if out_fmt not in ("json", "md"):
+            console.print("[red]format must be json or md[/red]")
+            raise typer.Exit(1)
+        redact = settings.redact_secrets and not no_redact
+        path = export_audit(
+            client, session_id, out, redact=redact, fmt=out_fmt
+        )
+        console.print(
+            f"[green]Wrote audit package[/green] {path} "
+            f"(redacted={redact})"
+        )
+    except FileNotFoundError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
     finally:
         client.close()
 

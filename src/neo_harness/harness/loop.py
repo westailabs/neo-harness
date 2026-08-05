@@ -23,6 +23,8 @@ from neo_harness.schemas.episode import Episode, EpisodeKind
 from neo_harness.schemas.plan import Plan, StepStatus
 from neo_harness.schemas.reflection import ReflectionTrigger
 from neo_harness.schemas.session import HarnessState, Session, SessionStatus
+from neo_harness.security.policy import PolicyConfig, load_policy, policy_preamble
+from neo_harness.security.secrets import redact_secrets
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +65,7 @@ class HarnessLoop:
         *,
         max_iterations: int = 20,
         agent: AgentProfile | None = None,
+        policy: PolicyConfig | None = None,
     ) -> None:
         self.client = client
         self.provider = provider
@@ -70,17 +73,24 @@ class HarnessLoop:
         self.budget = budget or Budget()
         self.max_iterations = max_iterations
         self.agent = agent
+        self.policy = policy or load_policy()
         self.machine = StateMachine()
         self.plan: Plan | None = None
 
     def _system(self, phase: str) -> str:
         if self.agent is not None:
-            return self.agent.system_for(phase)
-        if phase == "plan":
-            return DEFAULT_PLAN_SYSTEM
-        if phase == "act":
-            return DEFAULT_ACT_SYSTEM
-        raise ValueError(f"Unknown phase for default system prompt: {phase}")
+            base = self.agent.system_for(phase)
+        elif phase == "plan":
+            base = DEFAULT_PLAN_SYSTEM
+        elif phase == "act":
+            base = DEFAULT_ACT_SYSTEM
+        else:
+            # reflect and unknown: agent path handles reflect; default empty + policy
+            base = ""
+        preamble = policy_preamble(self.policy)
+        if base:
+            return redact_secrets(f"{base.rstrip()}\n\n{preamble}")
+        return redact_secrets(preamble)
 
     def _task_brief(self, session: Session) -> str:
         """Prefer short summary from metadata; else clip full task."""

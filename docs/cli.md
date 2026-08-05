@@ -16,6 +16,10 @@ neo <command>
 neo --help
 neo --version
 neo version
+neo policy                 # show tier + path gates
+neo policy --check-path P  # allow/deny test
+neo audit <session_id> -o review.json
+neo audit <session_id> -o review.md --format md
 ```
 
 ## `neo init-db`
