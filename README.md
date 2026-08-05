@@ -1,6 +1,6 @@
 # neo-harness
 
-Production-style **agent harness** for Grok Build, GitHub Copilot, and (optionally) the xAI API.
+**Alpha** production-style **agent harness** for Grok Build, GitHub Copilot, and (optionally) the xAI API.
 
 The model is a **replaceable reasoning engine**. The harness owns:
 
@@ -10,22 +10,22 @@ The model is a **replaceable reasoning engine**. The harness owns:
 - Forced structured reflection
 - Session continuity across days
 
+> **Status:** `0.1.x` alpha — APIs and CLI flags may change before 1.0.  
+> **License:** [MIT](./LICENSE)
+
 ## Documentation
 
-**Full docs live in [`docs/`](./docs/README.md):**
+Full docs: [`docs/`](./docs/README.md)
 
 | Doc | Topic |
 |-----|--------|
-| [Quick Start](./docs/quickstart.md) | Install, venv, Neo4j, first run |
+| [Quick Start](./docs/quickstart.md) | Install, Neo4j, first run |
 | [Architecture](./docs/architecture.md) | State machine, memory, loop |
 | [CLI](./docs/cli.md) | `start` · `resume` · `status` · `end` |
 | [Providers](./docs/providers.md) | mock · grok_build · copilot · xai |
-| [Neo4j](./docs/neo4j.md) | Schema, Browser queries |
-| [Configuration](./docs/configuration.md) | Environment variables |
-| [Usage & demo](./docs/usage-and-demo.md) | How to use it · **demo script** |
-| [Development](./docs/development.md) | Layout, tests, extensions |
-| [Troubleshooting](./docs/troubleshooting.md) | Common failures |
-| [Security & publishing](./docs/security-and-publishing.md) | Secrets, bloat, pre-push audit |
+| [Workspace embed](./docs/workspace-embed.md) | Use neo-harness inside your own repo |
+| [Security & publishing](./docs/security-and-publishing.md) | Secrets hygiene |
+| [Contributing](./CONTRIBUTING.md) | Dev setup and PRs |
 
 ## Architecture (snapshot)
 
@@ -38,42 +38,90 @@ INIT → PLAN → ACT → OBSERVE ⇄ ACT
 | Layer | Responsibility |
 |--------|----------------|
 | **State machine** | Legal transitions only |
-| **Memory** | Working · Episodic · Semantic (Neo4j SoT) |
+| **Memory** | Working · Episodic · Semantic (Neo4j source of truth) |
 | **Providers** | plan / act / reflect only |
 | **CLI** | `neo start` · `resume` · `status` · `end` |
 
-## Quick Start (shortest path)
+## Quick Start
+
+### Requirements
+
+- Python **3.12+**
+- [uv](https://github.com/astral-sh/uv) (recommended) or pip
+- Neo4j **5.x** over Bolt (local Docker is fine)
+- Optional: `grok` CLI, `copilot` CLI, or `XAI_API_KEY`
+
+### Neo4j (fresh Docker)
 
 ```bash
-cd ~/projects/neo-harness
+docker run -d --name neo4j-harness \
+  -p 7474:7474 -p 7687:7687 \
+  -e NEO4J_AUTH=neo4j/password \
+  neo4j:5
+```
+
+Browser: http://localhost:7474 — set the same password in `.env`.
+
+### Install and smoke (mock provider)
+
+```bash
+git clone https://github.com/westailabs/neo-harness.git
+cd neo-harness
 uv sync --all-extras
-cp .env.example .env   # set NEO4J_PASSWORD to match your DB
+
+cp .env.example .env
+# NEO4J_URI=bolt://localhost:7687
+# NEO4J_PASSWORD=password   # must match the running DB
+
 uv run neo init-db
-uv run neo start "Smoke test" --provider mock
+uv run neo start "Smoke test neo-harness" --provider mock
 uv run neo status --all
+uv run pytest -q
 ```
 
-**Always prefer `uv run`** if another venv (e.g. `.python3_venv`) is active — uv’s
-“VIRTUAL_ENV does not match `.venv`” warning is safe to ignore.
+Prefer **`uv run neo …`** so the project `.venv` is used even if another virtualenv is active.
 
-Lab Neo4j password must match `~/neo4j/docker-compose.yml`, not the package default.
-
-Real model:
+### Real model
 
 ```bash
-NEO_ACT_ALLOW_TOOLS=0 uv run neo start "Draft a short design note for typed memory" --provider copilot
-# or: --provider grok_build
+# Grok Build CLI (authenticated `grok` on PATH)
+uv run neo start "Draft a short design note for typed memory" --provider grok_build
+
+# GitHub Copilot CLI
+uv run neo start "Draft a short design note for typed memory" --provider copilot
 ```
 
-Long runs look quiet; watch with `uv run neo status -s <id>` in another terminal.
+Long runs can look quiet; progress is in Neo4j:
 
-## Demo
+```bash
+uv run neo status --all
+uv run neo status -s <session_id>
+```
 
-See **[docs/usage-and-demo.md](./docs/usage-and-demo.md)** for:
+### SysAdmin agent (host IaC repos)
 
-- When to use the harness vs free-form chat  
-- Day-to-day recipes  
-- An **~8 minute demo** (mock → real provider → Neo4j Browser → resume)
+```bash
+uv run neo agents
+NEO_ACT_ALLOW_TOOLS=1 \
+  NEO_PROVIDER_CWD=~/path/to/your-host-iac \
+  uv run neo start "Add a status check for ruff to make status" \
+    --provider grok_build \
+    --agent sysadmin
+```
+
+## Workspace embed
+
+Treat **neo-harness as a library/CLI**; your monorepo or IaC tree is the workspace:
+
+```bash
+# in your project
+python3 -m venv .venv-neo
+.venv-neo/bin/pip install -e /path/to/neo-harness   # or: pip install neo-harness==0.1.x when published
+export NEO_PROVIDER_CWD="$PWD"
+.venv-neo/bin/neo start --task-file jobs/demo.md --agent sysadmin -p mock
+```
+
+See [docs/workspace-embed.md](./docs/workspace-embed.md).
 
 ## Project layout
 
@@ -84,6 +132,7 @@ src/neo_harness/
   providers/        # mock, grok_build, copilot, xai
   schemas/
   neo4j/
+agents/             # built-in packs (e.g. sysadmin)
 docs/
 tests/
 ```
@@ -94,6 +143,11 @@ tests/
 uv run pytest -q
 ```
 
+## Security
+
+Never commit `.env` or API keys. See [SECURITY.md](./SECURITY.md) and
+[docs/security-and-publishing.md](./docs/security-and-publishing.md).
+
 ## License
 
-MIT
+[MIT](./LICENSE) © West AI Labs LLC

@@ -90,4 +90,5 @@ git status   # clean, no .env
 git push     # only develop (or release tags), per lab git policy
 ```
 
-Feature branches are local-only in the West AI Labs workflow; merge to `develop` before push.
+Prefer feature branches and merge to `develop` (or the default integration branch)
+before pushing shared history.

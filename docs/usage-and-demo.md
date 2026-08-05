@@ -22,6 +22,7 @@ Use plain Grok/Copilot when you want a fast one-off answer.
 |---------|------|-----|
 | **Design / spike** | ADRs, design notes, architecture | `NEO_ACT_ALLOW_TOOLS=0`, `copilot` or `grok_build` |
 | **Repo work** | Implement something in a checkout | `NEO_ACT_ALLOW_TOOLS=1`, set `NEO_PROVIDER_CWD`, short task |
+| **Workstation IaC** | Ansible/packages/dotfiles host repos | `--agent sysadmin`, `NEO_PROVIDER_CWD` to that repo — full recipe: [sysadmin-workflow.md](./sysadmin-workflow.md) |
 | **Continuity** | Start Friday, resume Monday | `start` → pause/`end` → `resume <id>` |
 | **Audit** | “What did we decide?” | `status -s <id>`, Neo4j Browser |
 | **Smoke / CI** | Is wiring healthy? | `--provider mock` |
@@ -205,6 +206,11 @@ uv run neo status --all
 | Episodes | Ordered audit trail (plan, action, observation, reflection) |
 
 ---
+
+## Domain: GCP, Terraform, DBA
+
+- **[GCP overview](./gcp.md)** — high-value GCP uses, architecture sketch, safety rails  
+- **[GCP / Terraform / DBA](./gcp-terraform-dba.md)** — change management, drift, migrations, RCA detail
 
 ## FAQ
 

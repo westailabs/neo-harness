@@ -17,10 +17,12 @@ neo-harness/
 ├── pyproject.toml
 ├── README.md                 # overview + pointers
 ├── .env.example
+├── agents/                   # agent packs (e.g. sysadmin) — see agents/README.md
 ├── docs/                     # this documentation
 ├── src/neo_harness/
 │   ├── cli.py
 │   ├── config.py
+│   ├── agents/               # pack loader
 │   ├── harness/
 │   ├── providers/
 │   ├── schemas/
@@ -58,6 +60,13 @@ Unit tests do **not** require Neo4j. Integration against a live DB is manual via
 2. Register in `get_provider()`.
 3. Document in `docs/providers.md` + `docs/configuration.md`.
 4. Prefer mock fallback on failure.
+
+### New agent pack
+
+1. Add `agents/<id>/` with `AGENT.md`, `prompts/{plan,act,reflect}.md`, optional `manifest.yml`.
+2. No code change required if the loader can discover the directory.
+3. Document target repos and a short recipe (see [sysadmin-workflow.md](./sysadmin-workflow.md)).
+4. Add or extend tests in `tests/test_agents.py`.
 
 ### New graph types
 

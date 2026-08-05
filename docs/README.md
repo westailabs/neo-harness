@@ -7,11 +7,16 @@ the harness owns control flow, typed memory (Neo4j), budgets, and reflection.
 |----------|----------|
 | [Quick Start](./quickstart.md) | Install, venv, Neo4j, first `neo start` |
 | [Architecture](./architecture.md) | State machine, memory layers, loop, ownership |
-| [CLI reference](./cli.md) | `start` · `resume` · `status` · `end` · `init-db` |
+| [CLI reference](./cli.md) | `start` · `resume` · `status` · `end` · `init-db` · `agents` |
 | [Providers](./providers.md) | `mock` · `grok_build` · `copilot` · `xai` |
 | [Neo4j](./neo4j.md) | Graph schema, constraints, Browser queries |
 | [Configuration](./configuration.md) | Environment variables and defaults |
 | [Usage & demo](./usage-and-demo.md) | How to use it well; 8-minute demo script |
+| [SysAdmin workflow](./sysadmin-workflow.md) | Host IaC via `--agent sysadmin` (demo alias walkthrough) |
+| [Workspace embed](./workspace-embed.md) | Bootstrap, pip pin, pack search order, thrift defaults |
+| [Plan: token diet + embed](./plans/token-diet-and-workspace-embed.md) | Agreed direction + next implementation fence |
+| [GCP overview](./gcp.md) | How to use the harness on Google Cloud |
+| [GCP / Terraform / DBA](./gcp-terraform-dba.md) | Ops patterns: plan-only, drift, migrations, identity |
 | [Development](./development.md) | Layout, tests, extending the harness |
 | [Troubleshooting](./troubleshooting.md) | Venv warnings, auth failures, “frozen” UI |
 | [Security & publishing](./security-and-publishing.md) | Secrets, bloat, pre-push audit |
@@ -20,6 +25,8 @@ the harness owns control flow, typed memory (Neo4j), budgets, and reflection.
 **Root overview:** [../README.md](../README.md)
 
 **Do not commit** `.env`, `.venv`, or real passwords/API keys — see [Security & publishing](./security-and-publishing.md).
+
+**Public flip checklist:** [public-release-checklist.md](./public-release-checklist.md)
 
 ## Design principles (v0.1)
 
