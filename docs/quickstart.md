@@ -98,6 +98,7 @@ uv run neo version
 
 ## Next reading
 
+- [Starting a workspace](./starting-a-workspace.md) — embed neo-harness in a new project  
 - [Usage & demo](./usage-and-demo.md) — how to use and present the harness  
 - [Providers](./providers.md) — mock / grok / copilot / xai  
 - [Workspace embed](./workspace-embed.md) — use from another git repo  

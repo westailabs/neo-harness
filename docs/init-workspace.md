@@ -45,8 +45,15 @@ python3 -m venv .venv-neo
 .venv-neo/bin/pip install -e "$NEO_HARNESS_SRC"
 ```
 
+## Full walkthrough
+
+Step-by-step from empty/existing git repo through first mock job:
+
+→ **[starting-a-workspace.md](./starting-a-workspace.md)** (example: `~/projects/test`)
+
 ## Related
 
+- [starting-a-workspace.md](./starting-a-workspace.md)  
 - [workspace-embed.md](./workspace-embed.md)  
 - [policy.md](./policy.md)  
 - [providers.md](./providers.md)  
