@@ -28,27 +28,78 @@ Avoid `uv sync --active` unless you mean to target the currently activated forei
 
 ## Neo4j
 
+### FAQ / Tip: `init-db` times out on `localhost:7687`
+
+```text
+Couldn't connect to localhost:7687 … Timed out …
+Cannot connect to Neo4j. URI=bolt://localhost:7687
+```
+
+**This is usually not a neo-harness bug.** `neo init-db` does **not** start Neo4j.
+It only connects to whatever `NEO4J_URI` / password say and applies schema.
+
+| Check | Command / action |
+|-------|------------------|
+| Is anything listening? | `ss -ltn \| grep 7687` or `docker ps` |
+| Remapped lab port? | Host **17687** → container 7687 is common |
+| Match `.env` to the live stack | `NEO4J_URI=bolt://localhost:17687` (example) |
+| Password | Must match **that** container’s `NEO4J_AUTH`, not the package default |
+
+**Lab example:** container `…-neo4j` with  
+`0.0.0.0:17687->7687/tcp` and `17474->7474` → use Bolt **`17687`**, Browser **`17474`**.
+
+```bash
+# See host port mapping
+docker ps --format '{{.Names}} {{.Ports}}' | grep -i neo4j
+
+# Point workspace .env at the host Bolt port
+# NEO4J_URI=bolt://localhost:17687
+# NEO4J_PASSWORD=<same as that instance>
+
+./scripts/neo init-db
+```
+
+**Fresh dedicated instance** (if you want default 7687):
+
+```bash
+docker run -d --name neo4j-harness \
+  -p 7474:7474 -p 7687:7687 \
+  -e NEO4J_AUTH=neo4j/password \
+  neo4j:5
+# .env: NEO4J_URI=bolt://localhost:7687  NEO4J_PASSWORD=password
+```
+
+**Multiple workspaces** may share one Neo4j (same URI) or each use a different
+port/database — set each project’s `.env` accordingly. `init-db` only touches
+the database you configured for **this** process.
+
+See [neo4j.md](./neo4j.md) (multiple instances) and [starting-a-workspace.md](./starting-a-workspace.md).
+
 ### `Neo.ClientError.Security.Unauthorized`
 
 Wrong password/user for the instance on that URI.
 
-1. Check what is listening: `docker ps` (ports 7687 vs 17687).  
+1. Check what is listening: `docker ps` (host ports **7687 vs 17687**).  
 2. Set `NEO4J_PASSWORD` in `.env` to match that container’s `NEO4J_AUTH`.  
-3. Lab compose often lives at `~/neo4j/docker-compose.yml`.
+3. Do not assume the example password `password` unless you set it that way.
 
 ### `Cannot connect` / connection refused
 
-- Is Neo4j up? `docker ps | rg neo4j`  
-- Correct `NEO4J_URI` (bolt port)?  
+Same as the FAQ above: process not up, wrong **host** Bolt port, or firewall.
+
+- Is Neo4j up? `docker ps \| grep -i neo4j`  
+- Correct `NEO4J_URI` (**published** port, not always 7687)?  
 - Firewall / bind address?
 
 ### Schema errors on first run
 
 ```bash
 uv run neo init-db
+# or from a workspace embed:
+./scripts/neo init-db
 ```
 
-Idempotent; safe to re-run.
+Idempotent; safe to re-run. Requires a **reachable** Neo4j first.
 
 ---
 
