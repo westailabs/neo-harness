@@ -7,16 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-05
+
 ### Added
 
-- Public-release hygiene: `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`, CI workflow
-- Workspace agent pack discovery requires `manifest.yml` or phase prompts (skips free-form `AGENT.md`-only profiles)
-- Token diet defaults, `--task-file`, run profiles (`cheap` / `deep`)
-- Built-in `sysadmin` agent pack and workspace-embed documentation
+- **Policy tiers** (`NEO_POLICY_TIER=report|propose|apply`) and path allow/deny gates
+- **`neo policy`** CLI — show policy; `--check-path` for gate tests
+- **`neo audit`** CLI — export session audit package (JSON/MD) with redaction
+- **Secret redaction** on episodic memory, reflections, decisions, and system prompts
+- Docs: [threat-model.md](docs/threat-model.md), [policy.md](docs/policy.md), [supply-chain.md](docs/supply-chain.md)
+- `scripts/generate-sbom.sh` for environment SBOM export
 
-### Changed
+### Security
 
-- Docs and examples use generic host IaC paths (no personal machine names)
+- Default path denylist for `.env`, PEMs, credentials
+- Report tier forces `NEO_ACT_ALLOW_TOOLS=0`
 
 ## [0.1.0] - 2026-08-03
 

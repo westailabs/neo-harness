@@ -49,8 +49,13 @@ class Settings(BaseSettings):
         default=3, alias="NEO_SKIP_INTERVAL_REFLECT_MAX_STEPS"
     )
     task_display_chars: int = Field(default=120, alias="NEO_TASK_DISPLAY_CHARS")
-    # Prefer cheap Copilot defaults when unset in env (override freely)
-    # copilot_model / copilot_effort already above; defaults set for thrift
+
+    # Policy / InfoSec (see neo_harness.security.policy)
+    policy_tier: str = Field(default="propose", alias="NEO_POLICY_TIER")
+    path_allow: str = Field(default="", alias="NEO_PATH_ALLOW")
+    path_deny: str = Field(default="", alias="NEO_PATH_DENY")
+    # Redact secrets in memory / audit by default
+    redact_secrets: bool = Field(default=True, alias="NEO_REDACT_SECRETS")
 
 
 @lru_cache

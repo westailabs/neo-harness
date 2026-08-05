@@ -20,6 +20,10 @@ the harness owns control flow, typed memory (Neo4j), budgets, and reflection.
 | [Development](./development.md) | Layout, tests, extending the harness |
 | [Troubleshooting](./troubleshooting.md) | Venv warnings, auth failures, “frozen” UI |
 | [Security & publishing](./security-and-publishing.md) | Secrets, bloat, pre-push audit |
+| [Policy](./policy.md) | Tiers (report/propose/apply) + path gates |
+| [Threat model](./threat-model.md) | Assets, actors, mitigations (InfoSec) |
+| [Supply chain](./supply-chain.md) | Lockfile, SBOM, releases |
+| [CLI `policy` / `audit`](./cli.md) | Control plane + session export |
 
 **Package version:** see `src/neo_harness/__init__.py` / `pyproject.toml`  
 **Root overview:** [../README.md](../README.md)
