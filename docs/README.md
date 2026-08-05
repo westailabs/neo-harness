@@ -13,7 +13,9 @@ the harness owns control flow, typed memory (Neo4j), budgets, and reflection.
 | [Configuration](./configuration.md) | Environment variables and defaults |
 | [Usage & demo](./usage-and-demo.md) | How to use it well; 8-minute demo script |
 | [SysAdmin workflow](./sysadmin-workflow.md) | Host IaC via `--agent sysadmin` (demo alias walkthrough) |
+| [**Starting a workspace**](./starting-a-workspace.md) | End-to-end: new repo → init → first mock job (`~/projects/test` example) |
 | [Workspace embed](./workspace-embed.md) | Bootstrap, pip pin, pack search order, thrift defaults |
+| [init-workspace](./init-workspace.md) | CLI flags and files created by `neo init-workspace` |
 | [Plan: token diet + embed](./plans/token-diet-and-workspace-embed.md) | Agreed direction + next implementation fence |
 | [GCP overview](./gcp.md) | How to use the harness on Google Cloud |
 | [GCP / Terraform / DBA](./gcp-terraform-dba.md) | Ops patterns: plan-only, drift, migrations, identity |
@@ -24,7 +26,6 @@ the harness owns control flow, typed memory (Neo4j), budgets, and reflection.
 | [Threat model](./threat-model.md) | Assets, actors, mitigations (InfoSec) |
 | [Supply chain](./supply-chain.md) | Lockfile, SBOM, releases |
 | [CLI `policy` / `audit`](./cli.md) | Control plane + session export |
-| [init-workspace](./init-workspace.md) | Thin workspace embed (not full Forge) |
 
 **Package version:** see `src/neo_harness/__init__.py` / `pyproject.toml`  
 **Root overview:** [../README.md](../README.md)

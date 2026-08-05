@@ -24,6 +24,8 @@ neo audit <session_id> -o review.json
 neo audit <session_id> -o review.md --format md
 ```
 
+New project walkthrough: [starting-a-workspace.md](./starting-a-workspace.md).
+
 ## `neo init-db`
 
 Create Neo4j constraints and indexes (idempotent).

@@ -25,7 +25,8 @@ Manual pattern:
 4. neo start --task-file jobs/….md --agent <pack>
 ```
 
-See [init-workspace.md](./init-workspace.md).
+See [init-workspace.md](./init-workspace.md) and the full guide
+[starting-a-workspace.md](./starting-a-workspace.md).
 
 ### Editable (local development of the harness)
 
