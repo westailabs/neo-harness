@@ -136,11 +136,11 @@ The harness still owns transitions, budgets, and memory writes.
 | `manifest.yml` | id, name, description, target_repos |
 | CLI | `neo agents` · `neo start … --agent <id>` · `NEO_AGENT` |
 
-Built-in: **`sysadmin`** — workstation / host IaC
-(`wsl-shurtugal`, `L213196-WSL2-Ubuntu`, `shurtugal-lnx`).
+Built-in: **`sysadmin`** — workstation / host IaC (Ansible-style trees).
 
 Loader: `neo_harness.agents.loader` — search order:
-`NEO_AGENTS_DIR` → repo `agents/` → `~/.neo-harness/agents`.
+`$NEO_PROVIDER_CWD/agents` → `NEO_AGENTS_DIR` → package `agents/` →
+`~/.neo-harness/agents`.
 
 ## Extension points
 

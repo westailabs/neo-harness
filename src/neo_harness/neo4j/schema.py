@@ -57,7 +57,11 @@ def setup_schema(client: Neo4jClient) -> None:
             logger.debug("Applied: %s", stmt[:60])
         except Exception as exc:  # noqa: BLE001
             logger.warning("Index statement failed: %s — %s", stmt[:80], exc)
-    logger.info("Neo4j schema setup complete (%d constraints, %d indexes)", len(CONSTRAINTS), len(INDEXES))
+    logger.info(
+        "Neo4j schema setup complete (%d constraints, %d indexes)",
+        len(CONSTRAINTS),
+        len(INDEXES),
+    )
 
 
 def drop_all_harness_data(client: Neo4jClient) -> None:

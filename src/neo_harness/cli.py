@@ -483,7 +483,8 @@ def end(
             raise typer.Exit(1)
 
         # Best-effort end-of-session reflection if still mid-loop.
-        if session.state not in (HarnessState.DONE, HarnessState.FAILED) and session.state != HarnessState.INIT:
+        terminal = (HarnessState.DONE, HarnessState.FAILED)
+        if session.state not in terminal and session.state != HarnessState.INIT:
             try:
                 from neo_harness.harness.memory import Neo4jEpisodicMemory
                 from neo_harness.harness.reflection import run_reflection
@@ -518,7 +519,13 @@ def end(
         if _load_active_id() == session.id:
             _clear_active()
 
-        console.print(Panel.fit(f"[bold]Ended[/bold] {session.id} as {status.value}", border_style="red" if fail else "green"))
+        style = "red" if fail else "green"
+        console.print(
+            Panel.fit(
+                f"[bold]Ended[/bold] {session.id} as {status.value}",
+                border_style=style,
+            )
+        )
         _print_session(session)
     finally:
         client.close()

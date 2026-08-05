@@ -5,12 +5,15 @@ description = "Production-style agent harness with explicit state machine and Ne
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
-authors = [{ name = "West AI Labs" }]
-keywords = ["agent", "harness", "neo4j", "grok", "state-machine"]
+authors = [{ name = "West AI Labs LLC" }]
+keywords = ["agent", "harness", "neo4j", "grok", "state-machine", "llm"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
     "Typing :: Typed",
 ]
 dependencies = [
@@ -50,3 +53,9 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+ignore = [
+    "B008",  # typer.Option in defaults is the normal Typer pattern
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]

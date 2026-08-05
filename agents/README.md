@@ -9,13 +9,17 @@ shapes how the model reasons inside each state.
 ```
 agents/
   <id>/
-    AGENT.md              # Full persona (also prepended to phase prompts)
+    AGENT.md              # Full persona (human-facing / optional full mode)
     manifest.yml          # name, description, target_repos
     prompts/
       plan.md             # PLAN system prompt
       act.md              # ACT system prompt
       reflect.md          # REFLECT system prompt
+      persona.short.md    # Preferred short persona (token thrift)
 ```
+
+A directory is a pack only if it has **`manifest.yml`** or phase prompts under
+`prompts/`. Free-form `AGENT.md`-only profiles are ignored.
 
 ## Built-in packs
 
@@ -28,7 +32,7 @@ agents/
 ```bash
 # Explicit agent for a workstation IaC task
 NEO_ACT_ALLOW_TOOLS=1 \
-  NEO_PROVIDER_CWD=~/projects/wsl-shurtugal \
+  NEO_PROVIDER_CWD=~/path/to/your-host-iac \
   uv run neo start "Add ripgrep to apt manifest and role" \
     --provider grok_build \
     --agent sysadmin
@@ -43,7 +47,7 @@ List packs:
 uv run neo agents
 ```
 
-Optional search path (prepended):
+Optional search path (prepended after workspace cwd):
 
 ```bash
 export NEO_AGENTS_DIR=~/.neo-harness/agents
@@ -53,10 +57,10 @@ export NEO_AGENTS_DIR=~/.neo-harness/agents
 
 Patterns this agent is built for:
 
-- `wsl-shurtugal` — personal WSL2 Ubuntu IaC
-- `L213196-WSL2-Ubuntu` — work WSL2 Ubuntu IaC (reference; do not mix secrets)
-- `shurtugal-lnx` — bare-metal / desktop Ubuntu recovery suite
-- Similar: Ansible + `packages/` + roles + Makefile + docs/environment facts
+- Ansible + `packages/` + roles + Makefile + environment docs
+- Dotfiles managed from the repo
+- Optional local compose under `services/`
 
 Do **not** use `sysadmin` as the default for product app monorepos unless the task
-is host/IaC related.
+is host/IaC related. Add a workspace pack under `$NEO_PROVIDER_CWD/agents` for
+product work.

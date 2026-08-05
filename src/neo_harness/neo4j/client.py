@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Generator, Iterator
 from contextlib import contextmanager
-from typing import Any, Generator, Iterator
+from typing import Any
 
-from neo4j import Driver, GraphDatabase, ManagedTransaction, Session as NeoSession
+from neo4j import Driver, GraphDatabase, ManagedTransaction
+from neo4j import Session as NeoSession
 
 logger = logging.getLogger(__name__)
 

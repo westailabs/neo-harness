@@ -201,8 +201,8 @@ def _is_harness_pack(root: Path) -> bool:
     - manifest.yml / manifest.yaml, or
     - prompts/ with at least one of plan.md, act.md, reflect.md, persona.short.md
 
-    Free-form monorepo profiles (AGENT.md only) are ignored so workspaces like
-    west_ai_labs can keep both layouts under agents/.
+    Free-form monorepo profiles (AGENT.md only) are ignored so workspaces can
+    keep chat role cards under agents/ alongside real harness packs.
     """
     if (root / "manifest.yml").is_file() or (root / "manifest.yaml").is_file():
         return True

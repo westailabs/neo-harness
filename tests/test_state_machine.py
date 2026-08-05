@@ -4,9 +4,9 @@ import pytest
 
 from neo_harness.harness.state_machine import (
     ALLOWED_TRANSITIONS,
+    TERMINAL_STATES,
     IllegalTransitionError,
     StateMachine,
-    TERMINAL_STATES,
 )
 from neo_harness.schemas.session import HarnessState
 

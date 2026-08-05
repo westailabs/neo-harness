@@ -43,7 +43,7 @@ def test_load_sysadmin_uses_short_persona() -> None:
     agent = load_agent("sysadmin")
     assert agent is not None
     assert agent.name == "SysAdmin Agent"
-    assert "wsl-shurtugal" in agent.target_repos
+    assert "example-host-iac" in agent.target_repos
     plan = agent.system_for("plan")
     act = agent.system_for("act")
     reflect = agent.system_for("reflect")

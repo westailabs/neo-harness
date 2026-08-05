@@ -20,7 +20,7 @@ from neo_harness.neo4j import queries
 from neo_harness.neo4j.client import Neo4jClient
 from neo_harness.providers.base import ReasoningProvider
 from neo_harness.schemas.episode import Episode, EpisodeKind
-from neo_harness.schemas.plan import Plan, PlanStep, StepStatus
+from neo_harness.schemas.plan import Plan, StepStatus
 from neo_harness.schemas.reflection import ReflectionTrigger
 from neo_harness.schemas.session import HarnessState, Session, SessionStatus
 
