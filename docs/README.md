@@ -16,6 +16,7 @@ the harness owns control flow, typed memory (Neo4j), budgets, and reflection.
 | [**Starting a workspace**](./starting-a-workspace.md) | End-to-end: new repo → init → first mock job (`~/projects/test` example) |
 | [Workspace embed](./workspace-embed.md) | Bootstrap, pip pin, pack search order, thrift defaults |
 | [init-workspace](./init-workspace.md) | CLI flags and files created by `neo init-workspace` |
+| [**Related projects**](./related-projects.md) | **nebulus-forge** (scaffold) vs neo-harness (runtime) |
 | [Plan: token diet + embed](./plans/token-diet-and-workspace-embed.md) | Agreed direction + next implementation fence |
 | [GCP overview](./gcp.md) | How to use the harness on Google Cloud |
 | [GCP / Terraform / DBA](./gcp-terraform-dba.md) | Ops patterns: plan-only, drift, migrations, identity |
@@ -29,6 +30,10 @@ the harness owns control flow, typed memory (Neo4j), budgets, and reflection.
 
 **Package version:** see `src/neo_harness/__init__.py` / `pyproject.toml`  
 **Root overview:** [../README.md](../README.md)
+
+**Scaffolding a full project tree?** Use [nebulus-forge](https://github.com/westailabs/nebulus-forge)
+(`forge new`), then this package’s `neo init-workspace` (or `forge new --neo auto`).
+Details: [related-projects.md](./related-projects.md).
 
 **Do not commit** `.env`, `.venv`, or real passwords/API keys — see [Security & publishing](./security-and-publishing.md).
 

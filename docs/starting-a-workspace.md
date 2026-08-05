@@ -5,11 +5,22 @@ AI agents) can run bounded PLAN→ACT→REFLECT jobs without opening the whole
 monorepo in free-form chat.
 
 **Principle:** the **workspace** owns code, packs, and jobs; **neo-harness** is
-a library/CLI dependency — not a full project generator (that remains
-Forge/template territory).
+a library/CLI dependency — not a full project generator.
+
+For a **full** project skeleton (docs, `src/`, AGENTS, CI), use
+**[nebulus-forge](https://github.com/westailabs/nebulus-forge)** first, then this
+guide (or `forge new … --neo auto`). Cross-links: [related-projects.md](./related-projects.md).
 
 **Worked example root:** `~/projects/test`  
 Substitute your own path everywhere.
+
+### With Forge (optional)
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+forge new ~/projects/test -p base --no-interactive --neo auto
+# then continue from §4 (configure .env) if neo ran; else §2–3
+```
 
 ---
 
@@ -251,9 +262,11 @@ Same harness package; different **flavor** in the workspace.
 
 | Doc | Use |
 |-----|-----|
+| [related-projects.md](./related-projects.md) | **Forge vs neo-harness** composition |
 | [init-workspace.md](./init-workspace.md) | CLI flags and file list |
 | [workspace-embed.md](./workspace-embed.md) | Pack search order, thrift knobs |
 | [quickstart.md](./quickstart.md) | Running neo-harness itself |
 | [policy.md](./policy.md) | report / propose / apply |
 | [threat-model.md](./threat-model.md) | Operator vs model boundaries |
 | [troubleshooting.md](./troubleshooting.md) | Auth, venv, hung runs |
+| [nebulus-forge](https://github.com/westailabs/nebulus-forge) | Full project scaffolder |
