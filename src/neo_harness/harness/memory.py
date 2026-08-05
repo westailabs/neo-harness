@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
-from neo_harness.neo4j.client import Neo4jClient
 from neo_harness.neo4j import queries
+from neo_harness.neo4j.client import Neo4jClient
 from neo_harness.schemas.episode import Artifact, Decision, Episode, EpisodeKind
 from neo_harness.schemas.reflection import Reflection
 from neo_harness.schemas.session import Session
@@ -38,7 +38,9 @@ class SemanticMemory(Protocol):
     """Stable facts, decisions, SOPs that survive sessions."""
 
     def add_decision(self, decision: Decision) -> Decision: ...
-    def list_decisions(self, session_id: str | None = None, *, limit: int = 50) -> list[Decision]: ...
+    def list_decisions(
+        self, session_id: str | None = None, *, limit: int = 50
+    ) -> list[Decision]: ...
     def add_artifact(self, artifact: Artifact) -> Artifact: ...
     def list_artifacts(self, session_id: str, *, limit: int = 50) -> list[Artifact]: ...
     def related(self, session_id: str, *, limit: int = 20) -> list[dict[str, Any]]: ...

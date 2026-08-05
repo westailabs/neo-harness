@@ -17,7 +17,7 @@ class RunProfile:
     description: str = ""
 
 
-# cheap: fewer reflections, shorter loop — good for foobar-class jobs
+# cheap: fewer reflections, shorter loop — good for small demo-class jobs
 # deep: more steps/reflect — design or multi-file work
 # default: use settings as-is (no overrides)
 PROFILES: dict[str, RunProfile] = {

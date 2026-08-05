@@ -3,18 +3,18 @@
 ## Requirements
 
 - Python **3.12+**
-- [uv](https://github.com/astral-sh/uv) (preferred)
+- [uv](https://github.com/astral-sh/uv) (preferred) or pip + venv
 - Neo4j **5.x** reachable over Bolt
 - Optional: `grok` (Grok Build CLI), `copilot` (GitHub Copilot CLI), or `XAI_API_KEY`
 
-## Project environment (important)
+## Project environment
 
 This project uses a **local** `.venv` managed by uv.
 
-If your shell already has another env active (e.g. `🐍 .python3_venv`), uv prints:
+If your shell already has another env active, uv may print:
 
 ```text
-warning: VIRTUAL_ENV=.../.python3_venv does not match the project environment path `.venv`
+warning: VIRTUAL_ENV=... does not match the project environment path `.venv`
 ```
 
 **That is normal.** Prefer **`uv run …`** so every command uses the project env.
@@ -23,10 +23,10 @@ warning: VIRTUAL_ENV=.../.python3_venv does not match the project environment pa
 |----------|------|
 | `uv run neo …` | Always safe |
 | `source .venv/bin/activate` then `neo …` | Interactive shell; deactivate other venvs first |
-| Bare `neo` while `.python3_venv` is active | Often **wrong** — missing package / entrypoint |
+| Bare `neo` while a foreign venv is active | Often **wrong** — missing package / entrypoint |
 
 ```bash
-cd ~/projects/neo-harness
+cd neo-harness
 uv sync --all-extras
 uv run which neo
 # → …/neo-harness/.venv/bin/neo
@@ -34,14 +34,12 @@ uv run which neo
 
 Do **not** use `uv sync --active` unless you intentionally want installs in the foreign active venv.
 
-## Neo4j credentials
+## Neo4j
 
-`NEO4J_PASSWORD` must match the **running** database. Package default `password` is only a placeholder.
+`NEO4J_PASSWORD` must match the **running** database. The package default
+`password` is only a placeholder for local Docker.
 
-**Shurtugal lab:** container `neo4j` on `bolt://localhost:7687`. Auth is defined in
-`~/neo4j/docker-compose.yml` (`NEO4J_AUTH=neo4j/…`). Put that password in project `.env`.
-
-**Fresh Docker** (only if nothing owns 7474/7687):
+**Fresh Docker** (default ports 7474 / 7687):
 
 ```bash
 docker run -d --name neo4j-harness \
@@ -52,15 +50,17 @@ docker run -d --name neo4j-harness \
 
 Browser: http://localhost:7474
 
-## First run (lab)
+If you already run Neo4j on different host ports, set `NEO4J_URI` in `.env`
+(for example `bolt://localhost:17687`) to match that instance.
+
+## First run
 
 ```bash
-cd ~/projects/neo-harness
+cd neo-harness
 uv sync --all-extras
 
-# Once: env file (password must match your Neo4j)
 cp .env.example .env
-# Edit NEO4J_PASSWORD (and optionally NEO_PROVIDER)
+# Edit NEO4J_PASSWORD (and optionally NEO_PROVIDER) to match your DB
 
 uv run neo init-db
 
@@ -100,4 +100,5 @@ uv run neo version
 
 - [Usage & demo](./usage-and-demo.md) — how to use and present the harness  
 - [Providers](./providers.md) — mock / grok / copilot / xai  
+- [Workspace embed](./workspace-embed.md) — use from another git repo  
 - [Troubleshooting](./troubleshooting.md) — auth, venv, hung-looking runs  

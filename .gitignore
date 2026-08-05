@@ -78,3 +78,6 @@ Thumbs.db
 # --- Optional local notes (keep out of public trees) ---
 notes.local.md
 TODO.local.md
+
+# Local session dumps (not for public tree)
+docs/session-notes/

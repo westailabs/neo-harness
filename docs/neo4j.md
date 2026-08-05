@@ -96,16 +96,18 @@ RETURN s.task, s.state, s.status,
        count(DISTINCT ref) AS reflections
 ```
 
-## Lab topology notes
+## Multiple Neo4j instances
 
-On shurtugal you may have **multiple** Neo4j instances:
+You may run more than one Neo4j on a machine (different host ports). Point
+`NEO4J_URI` at the instance intended for **harness session memory**. Do not
+assume password `password` unless you started the container that way.
 
-| Instance | Typical ports | Role |
-|----------|---------------|------|
-| `neo4j` (lab compose) | 7474 / **7687** | Default for neo-harness |
-| `copilot-memory-neo4j` | 17474 / 17687 | Other stacks (OAP/copilot) |
+| Example | Typical ports | Notes |
+|---------|---------------|------|
+| Default Docker (`neo4j:5`) | 7474 / **7687** | Matches `.env.example` |
+| Custom compose / remapped ports | e.g. 17474 / 17687 | Set `NEO4J_URI=bolt://localhost:<bolt>` |
 
-Point `NEO4J_URI` at the instance you intend. Do not assume password `password`.
+Keep harness memory separate from unrelated app graphs unless you design schema isolation.
 
 ## Dev wipe (dangerous)
 
