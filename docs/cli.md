@@ -18,6 +18,8 @@ neo --version
 neo version
 neo policy                 # show tier + path gates
 neo policy --check-path P  # allow/deny test
+neo providers              # provider readiness
+neo init-workspace [path]  # thin embed into a git repo
 neo audit <session_id> -o review.json
 neo audit <session_id> -o review.md --format md
 ```

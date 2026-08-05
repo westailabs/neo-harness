@@ -56,6 +56,8 @@ class Settings(BaseSettings):
     path_deny: str = Field(default="", alias="NEO_PATH_DENY")
     # Redact secrets in memory / audit by default
     redact_secrets: bool = Field(default=True, alias="NEO_REDACT_SECRETS")
+    # On provider hard failure: mock (default) or none (fail-closed)
+    provider_fallback: str = Field(default="mock", alias="NEO_PROVIDER_FALLBACK")
 
 
 @lru_cache

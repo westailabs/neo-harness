@@ -27,10 +27,13 @@ from neo_harness.profiles import (
     profile_loop_iterations,
 )
 from neo_harness.providers import get_provider
+from neo_harness.providers.fallback import fallback_mode
+from neo_harness.providers.status import probe_all
 from neo_harness.schemas.reflection import ReflectionTrigger
 from neo_harness.schemas.session import HarnessState, Session, SessionStatus
 from neo_harness.security.audit import export_audit
 from neo_harness.security.policy import PolicyTier, load_policy, path_allowed
+from neo_harness.workspace.init import init_workspace
 
 app = typer.Typer(
     name="neo",
@@ -645,6 +648,99 @@ def audit_cmd(
         raise typer.Exit(1) from exc
     finally:
         client.close()
+
+
+@app.command("providers")
+def providers_cmd() -> None:
+    """Show reasoning provider readiness (binaries / API keys)."""
+    table = Table(title="neo-harness providers", show_header=True)
+    table.add_column("name", style="cyan")
+    table.add_column("ready")
+    table.add_column("detail")
+    table.add_column("notes")
+    for st in probe_all():
+        mark = "[green]yes[/green]" if st.available else "[red]no[/red]"
+        table.add_row(st.name, mark, st.detail, st.notes)
+    console.print(table)
+    console.print(
+        f"[dim]NEO_PROVIDER_FALLBACK={fallback_mode()} "
+        f"(mock = soft fallback; none = fail-closed)[/dim]"
+    )
+    console.print(
+        "[dim]Select with --provider / NEO_PROVIDER=mock|grok_build|copilot|xai[/dim]"
+    )
+
+
+@app.command("init-workspace")
+def init_workspace_cmd(
+    path: Path = typer.Argument(
+        Path("."),
+        help="Target workspace root (default: cwd)",
+        exists=False,
+        file_okay=False,
+        dir_okay=True,
+        writable=True,
+        resolve_path=True,
+    ),
+    pack: str = typer.Option(
+        "workspace",
+        "--pack",
+        help="Starter agent pack id under agents/<id>/",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Overwrite existing embed files",
+    ),
+    no_runner: bool = typer.Option(
+        False,
+        "--no-runner",
+        help="Skip scripts/neo workspace runner",
+    ),
+    no_pack: bool = typer.Option(
+        False,
+        "--no-pack",
+        help="Skip starter agent pack",
+    ),
+    force_no_git: bool = typer.Option(
+        False,
+        "--force-no-git",
+        help="Allow init outside a git repository",
+    ),
+) -> None:
+    """Populate a repo with a thin neo-harness embed (not a full project Forge)."""
+    target = path if path.exists() else Path.cwd() / path
+    if not target.exists():
+        target.mkdir(parents=True)
+    try:
+        result = init_workspace(
+            target,
+            pack_id=pack,
+            force=force,
+            with_runner=not no_runner,
+            with_pack=not no_pack,
+            require_git=not force_no_git,
+        )
+    except (RuntimeError, NotADirectoryError) as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    console.print(
+        Panel.fit(
+            f"[bold]init-workspace[/bold] {result.root}",
+            border_style="green",
+        )
+    )
+    if result.created:
+        console.print("[green]Created/updated:[/green]")
+        for item in result.created:
+            console.print(f"  + {item}")
+    if result.skipped:
+        console.print("[dim]Skipped (exists):[/dim]")
+        for item in result.skipped:
+            console.print(f"  · {item}")
+    for msg in result.messages:
+        console.print(f"[cyan]→[/cyan] {msg}")
 
 
 @app.command("version")
