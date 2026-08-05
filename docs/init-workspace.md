@@ -54,6 +54,8 @@ Step-by-step from empty/existing git repo through first mock job:
 ## Related
 
 - [starting-a-workspace.md](./starting-a-workspace.md)  
+- [related-projects.md](./related-projects.md) — Forge (`forge new --neo auto`) vs this command  
 - [workspace-embed.md](./workspace-embed.md)  
 - [policy.md](./policy.md)  
 - [providers.md](./providers.md)  
+- [nebulus-forge](https://github.com/westailabs/nebulus-forge)

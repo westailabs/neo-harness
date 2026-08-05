@@ -25,8 +25,11 @@ Full docs: [`docs/`](./docs/README.md)
 | [Providers](./docs/providers.md) | mock · grok_build · copilot · xai |
 | [Starting a workspace](./docs/starting-a-workspace.md) | New project → init → first mock job |
 | [Workspace embed](./docs/workspace-embed.md) | Use neo-harness inside your own repo |
+| [Related projects](./docs/related-projects.md) | **nebulus-forge** (scaffold) vs this runtime |
 | [Security & publishing](./docs/security-and-publishing.md) | Secrets hygiene |
 | [Contributing](./CONTRIBUTING.md) | Dev setup and PRs |
+
+Full project scaffolding: **[nebulus-forge](https://github.com/westailabs/nebulus-forge)** (`forge new`, optional `--neo auto`).
 
 ## Architecture (snapshot)
 
