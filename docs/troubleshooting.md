@@ -73,6 +73,18 @@ docker run -d --name neo4j-harness \
 port/database — set each project’s `.env` accordingly. `init-db` only touches
 the database you configured for **this** process.
 
+### FAQ / Tip: several projects each with neo-harness
+
+| Per workspace | Often shared |
+|---------------|--------------|
+| `.venv-neo`, `./scripts/neo`, `.env`, `agents/`, `jobs/` | Neo4j server (if same `NEO4J_URI`) |
+| `NEO_PROVIDER_CWD` | Provider CLIs (`grok`, `copilot`) |
+
+- Always run from the project root: `cd ~/projects/foo && ./scripts/neo …`  
+- Same Bolt URI → **one graph** for all sessions (`status --all` mixes projects)  
+- Isolate with different ports/databases if you need hard separation  
+- Active session pointer under `~/.neo-harness/` is machine-local, not per-repo  
+
 See [neo4j.md](./neo4j.md) (multiple instances) and [starting-a-workspace.md](./starting-a-workspace.md).
 
 ### `Neo.ClientError.Security.Unauthorized`
