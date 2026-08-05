@@ -10,6 +10,7 @@ from neo_harness.neo4j.client import Neo4jClient
 from neo_harness.schemas.episode import Artifact, Decision, Episode, EpisodeKind
 from neo_harness.schemas.reflection import Reflection
 from neo_harness.schemas.session import Session
+from neo_harness.security.secrets import redact_secrets, redact_structure
 
 
 @runtime_checkable
@@ -61,7 +62,9 @@ class InMemoryWorkingMemory:
         self.goal = goal
 
     def push_observation(self, text: str, *, meta: dict[str, Any] | None = None) -> None:
-        self.observations.append({"text": text, "meta": meta or {}})
+        self.observations.append(
+            {"text": redact_secrets(text), "meta": redact_structure(meta or {})}
+        )
         if len(self.observations) > self.max_observations:
             self.observations = self.observations[-self.max_observations :]
 
@@ -85,6 +88,12 @@ class Neo4jEpisodicMemory:
         self._client = client
 
     def append(self, episode: Episode) -> Episode:
+        # Secret hygiene: never persist raw secrets into episodic memory
+        episode.summary = redact_secrets(episode.summary)
+        if isinstance(episode.content, dict):
+            episode.content = redact_structure(episode.content)
+        elif isinstance(episode.content, str):
+            episode.content = redact_secrets(episode.content)
         queries.create_episode(self._client, episode)
         return episode
 
@@ -92,6 +101,9 @@ class Neo4jEpisodicMemory:
         return queries.list_episodes(self._client, session_id, limit=limit)
 
     def store_reflection(self, reflection: Reflection) -> Reflection:
+        reflection.what_happened = redact_secrets(reflection.what_happened)
+        if reflection.lessons:
+            reflection.lessons = [redact_secrets(x) for x in reflection.lessons]
         queries.create_reflection(self._client, reflection)
         # Also mirror as an Episode for timeline queries.
         episode = Episode(
@@ -114,6 +126,9 @@ class Neo4jSemanticMemory:
         self._client = client
 
     def add_decision(self, decision: Decision) -> Decision:
+        decision.statement = redact_secrets(decision.statement)
+        if decision.rationale:
+            decision.rationale = redact_secrets(decision.rationale)
         queries.create_decision(self._client, decision)
         return decision
 
