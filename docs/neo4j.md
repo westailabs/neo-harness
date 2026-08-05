@@ -105,7 +105,18 @@ assume password `password` unless you started the container that way.
 | Example | Typical ports | Notes |
 |---------|---------------|------|
 | Default Docker (`neo4j:5`) | 7474 / **7687** | Matches `.env.example` |
-| Custom compose / remapped ports | e.g. 17474 / 17687 | Set `NEO4J_URI=bolt://localhost:<bolt>` |
+| Custom compose / remapped ports | e.g. 17474 / **17687** | Host port ≠ container 7687 |
+
+**Tip:** Docker maps *host*→*container*. If you see `17687->7687/tcp`, clients
+must use **`bolt://localhost:17687`**, not `7687`. A timeout on 7687 almost
+always means “nothing listening there,” not a failed schema install.
+
+```bash
+docker ps --format '{{.Names}} {{.Ports}}' | grep -i neo4j
+```
+
+`neo init-db` only applies constraints/indexes to the URI in env — it does **not**
+start Neo4j. See [troubleshooting.md](./troubleshooting.md#faq--tip-init-db-times-out-on-localhost7687).
 
 Keep harness memory separate from unrelated app graphs unless you design schema isolation.
 
