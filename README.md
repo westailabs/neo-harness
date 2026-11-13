@@ -10,7 +10,7 @@ The model is a **replaceable reasoning engine**. The harness owns:
 - Forced structured reflection
 - Session continuity across days
 
-> **Status:** `0.1.x` alpha — APIs and CLI flags may change before 1.0.  
+> **Status:** `0.3.x` alpha — APIs and CLI flags may change before 1.0.  
 > **License:** [MIT](./LICENSE)
 
 ## Documentation
@@ -28,6 +28,7 @@ Full docs: [`docs/`](./docs/README.md)
 | [Related projects](./docs/related-projects.md) | **nebulus-forge** (scaffold) vs this runtime |
 | [Security & publishing](./docs/security-and-publishing.md) | Secrets hygiene |
 | [Contributing](./CONTRIBUTING.md) | Dev setup and PRs |
+| [AGENTS.md](./AGENTS.md) | Instructions for AI coding agents |
 
 Full project scaffolding: **[nebulus-forge](https://github.com/westailabs/nebulus-forge)** (`forge new`, optional `--neo auto`).
 
