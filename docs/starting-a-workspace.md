@@ -121,7 +121,7 @@ python3 -m venv .venv-neo
 
 # Released / pin (when published or from git tag):
 # .venv-neo/bin/pip install -r requirements-neo.txt
-# .venv-neo/bin/pip install "neo-harness @ git+https://github.com/westailabs/neo-harness.git@v0.3.0"
+# .venv-neo/bin/pip install "neo-harness @ git+https://github.com/westailabs/neo-harness.git@v0.3.2"
 ```
 
 `scripts/neo` can bootstrap `.venv-neo` on first run if the binary is missing,
